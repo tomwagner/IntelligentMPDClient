@@ -72,7 +72,7 @@ namespace GUI {
 
     aboutDialog->set_program_name("Intelligent MPD Client");
     aboutDialog->set_version("0.1");
-    aboutDialog->set_website("https://github.com/tomwagner/IntelligentMPDClient");
+    aboutDialog->set_website("http://www.impc.cz");
     std::vector<Glib::ustring> authors;
     authors.push_back("Bc. Tomáš Wagner - xwagne01@stud.fit.vutbr.cz");
     aboutDialog->set_authors(authors);
@@ -193,14 +193,14 @@ namespace GUI {
     builder->get_widget("slide", slide);
 
 
-    // aktualizujeme GUI, pokud se právě přehravá
-    mpd_state state = clientMPD->getClientState();
-    if (state == MPD_STATE_PLAY) {
-      playerEvent();
-      play->set_active(true);
-    } else if (state == MPD_STATE_PAUSE) {
-      playerEvent();
-    }
+//    // aktualizujeme GUI, pokud se právě přehravá
+    //mpd_state state = clientMPD->getClientState();
+//    if (state == MPD_STATE_PLAY) {
+//      playerEvent();
+//      play->set_active(true);
+//    } else if (state == MPD_STATE_PAUSE) {
+//      playerEvent();
+//    }
 
 
 

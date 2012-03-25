@@ -87,20 +87,22 @@ namespace MPD {
 
   void Client::disconnect() {
     // odpojíme spojení se serverem
-    mpd_connection_free(m_conn);
-    mpd_connection_free(m_IdleConn);
+    if (m_conn)
+      mpd_connection_free(m_conn);
+    if (m_IdleConn)
+      mpd_connection_free(m_IdleConn);
   }
 
 
   bool Client::isConnected() {
-    if (m_conn != NULL)
+    if (!m_conn)
       return true;
     return false;
   }
 
 
   mpd_state Client::getClientState() {
-    if (!m_status) return MPD_STATE_UNKNOWN;
+    if (!isConnected())
     return mpd_status_get_state(m_status);
   }
 
@@ -109,7 +111,7 @@ namespace MPD {
     if (!m_conn) return;
     mpd_run_play(m_conn);
     std::cout << "play" << getErrorMessage() << std::endl;
-    std::cout << "finish " << ((mpd_response_finish(m_conn))?"OK":"ERROR") << std::endl;
+    std::cout << "finish " << ((mpd_response_finish(m_conn)) ? "OK" : "ERROR") << std::endl;
   }
 
 
@@ -117,7 +119,7 @@ namespace MPD {
     if (!m_conn) return;
     mpd_send_toggle_pause(m_conn);
     std::cout << "pause" << getErrorMessage() << std::endl;
-    std::cout << "finish " << ((mpd_response_finish(m_conn))?"OK":"ERROR") << std::endl;
+    std::cout << "finish " << ((mpd_response_finish(m_conn)) ? "OK" : "ERROR") << std::endl;
   }
 
 
@@ -125,7 +127,7 @@ namespace MPD {
     if (!m_conn) return;
     mpd_run_stop(m_conn);
     std::cout << "stop" << getErrorMessage() << std::endl;
-    std::cout << "finish " << ((mpd_response_finish(m_conn))?"OK":"ERROR") << std::endl;
+    std::cout << "finish " << ((mpd_response_finish(m_conn)) ? "OK" : "ERROR") << std::endl;
 
   }
 
@@ -138,6 +140,7 @@ namespace MPD {
 
 
   std::string Client::getErrorMessage() {
+    if (!m_conn) return "";
     return mpd_connection_get_error_message(m_conn);
   }
 
@@ -146,7 +149,7 @@ namespace MPD {
    * Metoda vytvoří vlákno pro sledování stavů MPD serveru
    */
   void Client::startListenIdleMessages() {
-
+ 
     m_listening = true;
 
     if (pthread_create(&m_thread, NULL, &runListeningIdles, this) != 0) {
@@ -210,16 +213,19 @@ namespace MPD {
 
 
   int Client::getVolume() {
+    if (!m_conn) return 0;
     return mpd_status_get_volume(m_status);
   }
 
 
   void Client::nextSong() {
+    if (!m_conn) return;
     mpd_run_next(m_conn);
   }
 
 
   void Client::previousSong() {
+    if (!m_conn) return;
     mpd_run_previous(m_conn);
   }
 
