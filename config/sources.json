@@ -1,0 +1,20 @@
+{
+   "sources" : [
+      {
+         "active" : false,
+         "url" : "http://www.allmusic.com"
+      },
+      {
+         "active" : true,
+         "url" : "http://www.bandzone.cz"
+      },
+      {
+         "active" : true,
+         "url" : "http://www.last.fm"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.musicbraniz.com"
+      }
+   ]
+}

@@ -1,0 +1,12 @@
+{
+   "sources" : [
+      {
+         "active" : true,
+         "url" : "http://www.seynam.cz"
+      },
+      {
+         "active" : true,
+         "url" : "http://xchat.cz"
+      }
+   ]
+}
