@@ -1,0 +1,15 @@
+/*GtkWindow {
+  background-color: mix (@entry-color,shade (#fff, 0.5),0.8);
+  background-image: url('../ui/main.png');
+  
+}*/
+GtkLabel#songLabel {
+  font: Sans Bold;
+  font-size: 16;
+}
+
+/*GtkBox {
+  border-width: 5px;
+  border-style: solid;
+}*/
+
