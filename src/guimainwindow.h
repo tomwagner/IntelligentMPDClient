@@ -40,7 +40,6 @@
 #include "guiarticleswidget.h"
 #include "guislideshowwidget.h"
 #include "guiartistswidget.h"
-#include "guitextwidget.h"
 #include "guicoverwidget.h"
 #include "clientsettings.h"
 
