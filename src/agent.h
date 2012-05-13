@@ -26,40 +26,101 @@
 #ifndef AGENT_H
 #define	AGENT_H
 
-#include "global.h"
 #include "ClientException.h"
 #include "clientsettings.h"
 #include "webpage.h"
 #include "utils.h"
 #include "http.h"
 #include "mpdclient.h"
+#include "thread.h"
+#include "guimainwindow.h"
+#include "storage.h"
+
+#include<ctime>
 #include <list>
+#include <map>
+
+typedef struct {
+  std::string protocol_, host_, domain_, dirpath_, path_, query_;
+} parsedUrl;
+//
+//typedef struct {
+//  bool visited;
+//  std::string url;
+//  double relevance;
+//  std::time_t time;
+//} AgentUrl;
 
 class Agent {
 public:
-  Agent(MPD::Client * client, ClientSettings * settings, std::string url);
+  Agent(std::string url, MPD::Song s);
   virtual ~Agent();
 
   void run();
+  static void* run(void* pInstance);
+  void stop();
   bool changeSearch();
 
-private:
-  MPD::Client * clientMPD;
-  ClientSettings * clientSettings;
-  utils::HTTP * http;
-  Webpage * webpage;
 
-  // base
-  std::string baseUrl;
+
+private:
+  Thread * t;
+  utils::HTTP * http;
+  hashwrapper * hashWrapper;
+
+  MPD::Song currentMPDSong;
+
+  int minCharsInParagraph;
+  int minImageSize;
+
+  bool permission;
+
+  std::string sourceIcon;
+
   std::string actualUrl;
-  std::string sourceHTML;
+  std::string baseUrl; // http://*.domain.tld
+  std::string baseDomain; //  domain.tld
+
+
+  std::string currentArtist;
+  std::string currentSong;
+  std::string currentAlbum;
+
+  // agent history
+  std::map<std::string, AgentUrl> history;
 
   std::list<searchPair *> searchForms;
+  // map <hash, url>
+  std::map<std::string, AgentUrl> webMap;
+  std::map<std::string, AgentUrl> imageMap;
+  std::map<std::string, AgentUrl> youtubeMap;
 
+  void insertUrlIntoMap(std::map<std::string, AgentUrl>& map, std::string& url, bool visited);
+  void browseImageMap();
+
+  Webpage * getWebpage(std::string url)throw (ClientException);
+  bool isVisited(std::string url);
+
+  std::string getSourceIconURL(Webpage * w);
+
+
+  void saveArticles(std::list<article *> parList);
+  void saveAlbumList(std::list<imgPair> imgList);
+  void saveImageList(std::list<imgPair> imgList);
+
+  Webpage * searchInForms(std::list<searchPair*> searchForms, std::string name);
+
+  void recursiveSearch();
 
   bool detectIfIsValidPage();
+  std::string standardizeUrl(std::string baseUrl);
+  void splitKeyWords(const std::string &s, char delim, std::vector<std::string> &elems);
 
 
+  // utils
+  std::string absoluteUrl(std::string url);
+  parsedUrl parseUrl(const std::string& url_s);
+  std::string getDomain(const std::string& url);
 };
 
 #endif	/* AGENT_H */

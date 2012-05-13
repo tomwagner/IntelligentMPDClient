@@ -23,16 +23,23 @@
  * @brief GTK Main Window
  */
 #include "guimainwindow.h"
+//#include <cairomm/cairomm.h>
+
+Gtk::Main * kit = new Gtk::Main();
+GUI::MainWindow * gui = new GUI::MainWindow();
 
 namespace GUI {
 
 
-  MainWindow::MainWindow(MPD::Client *client, ClientSettings * settings) :
-  clientMPD(client),
-  clientSettings(settings) {
+  MainWindow::MainWindow() {
+    std::cout << "GUI constructor" << std::endl;
 
-    //clientMPD = client;
-    // načteme šablonu pro hlavní okno aplikace
+    // set default icon settings
+    Glib::RefPtr<Gtk::Settings> settings = Gtk::Settings::get_default();
+    settings->property_gtk_button_images() = true;
+
+
+    // load Glade UI
     Glib::RefPtr<Gtk::Builder> builder;
     try {
       builder = Gtk::Builder::create_from_file("ui/mainWindow.glade");
@@ -41,181 +48,216 @@ namespace GUI {
     }
 
 
-    // vybereme widgety
+    // select widgets
     builder->get_widget("mainWindow", mainWindow);
-    builder->get_widget("imageWidget", picture);
-    builder->get_widget("songLabel", songLabel);
-
-    builder->get_widget("songArtist", songArtist);
-    builder->get_widget("songName", songName);
-    builder->get_widget("songGenre", songGenre);
-    builder->get_widget("songAlbum", songAlbum);
-    builder->get_widget("songLength", songLength);
-    builder->get_widget("songWebpage", songWebpage);
-
-    builder->get_widget("statusBar", statusBar);
-    builder->get_widget("textLabel", textLabel);
-    //builder->get_widget("hBox", hBox);
-
-
-    // menu widgety
+    // menu widgets
+    builder->get_widget("connect", connect);
+    builder->get_widget("restart", restart);
+    restart->hide();
+    builder->get_widget("disconnect", disconnect);
+    builder->get_widget("info", info);
+    info->hide();
+    builder->get_widget("update", update);
     builder->get_widget("quit", quit);
+    builder->get_widget("showFeedbackButtons", showFeedbackButtons);
     builder->get_widget("fullscreen", fullscreen);
     builder->get_widget("sourceSettings", sourceSettings);
     builder->get_widget("progSettings", progSettings);
     builder->get_widget("about", about);
 
+
+    builder->get_widget("songLabel", songLabel);
+
+    builder->get_widget("albumCover", albumCover);
+    builder->get_widget("songArtist", songArtist);
+    builder->get_widget("songName", songName);
+    builder->get_widget("songGenre", songGenre);
+    builder->get_widget("songAlbum", songAlbum);
+    builder->get_widget("songBitrate", songBitrate);
+    builder->get_widget("songWebpage", songWebpage);
+    builder->get_widget("statusBar", statusBar);
+
+    // artist widget
+    builder->get_widget("artistTitle", artistTitle);
+    builder->get_widget("artistAbout", artistAbout);
+    builder->get_widget("artistSourceIcon", artistSourceIcon);
+    builder->get_widget("artistSourceName", artistSourceName);
+    builder->get_widget("artistSourceUrl", artistSourceUrl);
+
+    // feedback buttons
+    builder->get_widget("coverRight", coverRight);
+    builder->get_widget("coverWrong", coverWrong);
+    builder->get_widget("artistRight", artistRight);
+    builder->get_widget("artistWrong", artistWrong);
+    builder->get_widget("articleRight", articleRight);
+    builder->get_widget("articleWrong", articleWrong);
+    builder->get_widget("slideRight", slideRight);
+    builder->get_widget("slideWrong", slideWrong);
+
+
     // about dialog
     builder->get_widget("aboutDialog", aboutDialog);
-    //builder->get_widget("aboutDialog", aboutDialogClose);
-    //    builder->get_widget("settingsWindow", settingsWindow);
 
     aboutDialog->set_program_name("Intelligent MPD Client");
     aboutDialog->set_version("0.1");
     aboutDialog->set_website("http://www.impc.cz");
     std::vector<Glib::ustring> authors;
-    authors.push_back("Bc. Tomáš Wagner - xwagne01@stud.fit.vutbr.cz");
+    authors.push_back("Tomas Wagner - xwagne01@stud.fit.vutbr.cz");
     aboutDialog->set_authors(authors);
-    aboutDialog->set_license("GNU General Public License, version 3");
-    Glib::RefPtr<Gdk::Pixbuf> iconAbout = Gdk::Pixbuf::create_from_file("ui/icon.png");
+    Glib::RefPtr<Gdk::Pixbuf> iconAbout = Gdk::Pixbuf::create_from_file("ui/icon.png", 128, 128, true);
     aboutDialog->set_logo(iconAbout);
 
 
     about->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::showAboutDialog));
-    //aboutDialog->signal_button_press_event()->connect(sigc::mem_fun(*this, &MainWindow::quit));
+    //    aboutDialog->signal_button_press_event()->connect(sigc::mem_fun(*this, &MainWindow::quit));
     // vytvoříme status iconu
-    GtkStatusIcon * si = gtk_status_icon_new_from_file("ui/icon.png");
-    gtk_status_icon_set_name(si, "Intelligent MPD client");
-    gtk_status_icon_set_visible(si, true);
+    if (Glib::file_test("ui/icon.png", Glib::FILE_TEST_EXISTS)) {
+      Glib::RefPtr<Gtk::StatusIcon> trayIcon = Gtk::StatusIcon::create_from_file("ui/icon.png");
+      trayIcon->set_name("Intelligent MPD client");
+      trayIcon->set_visible(true);
+    }
 
-
-
-    // nastavení obrázku na pozadí
-    //    Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_file("ui/bg_test.jpg");
-    //    Glib::RefPtr<Gdk::Pixmap> pixmap;
-    //    Glib::RefPtr<Gdk::Bitmap> mask;
-    //    pixbuf->add_alpha(true, 255, 255, 255);
-    //    pixbuf->render_pixmap_and_mask(pixmap, mask, 0);
-    //
-    //    Glib::RefPtr<Gtk::Style> style = mainWindow->get_style()->copy();
-    //
-    //    style->set_bg_pixmap(Gtk::STATE_NORMAL, pixmap);
-    //    style->set_bg_pixmap(Gtk::STATE_ACTIVE, pixmap);
-    //    style->set_bg_pixmap(Gtk::STATE_PRELIGHT, pixmap);
-    //    style->set_bg_pixmap(Gtk::STATE_SELECTED, pixmap);
-    //    style->set_bg_pixmap(Gtk::STATE_INSENSITIVE, pixmap);
-    //    mainWindow->set_style(style);
-
-
-
-
-    //mainWindow->signal_event().connect(sigc::mem_fun(*this, &MainWindow::onExposeEvent));
+    showFeedbackButtons->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::feedbackSwitch));
     fullscreen->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::fullscreenSwitch));
 
-    quit->signal_activate().connect(&gtk_main_quit);
 
-    //mainWindow->set_decorated(false);
-
-
-    //    Gdk::Color color;
-    //    color.set("FFAAFF");
-    //    mainWindow->get_style()->set_base(Gtk::STATE_NORMAL, color);
-    //    mainWindow->get_style()->
-    mainWindow->show_all();
-    //    image->render_to_drawable(mainWindow->get_window(), mainWindow->get_style()->get_black_gc(),
-    //            0, 0, 0, 0, image->get_width(), image->get_height(), // draw the whole image (from 0,0 to the full width,height) at 100,80 in the window
-    //            Gdk::RGB_DITHER_NONE, 0, 0);
-
-
-    //    gtk_widget_set_style(GTK_WIDGET(mainWindow), GTK_STYLE(style));
-    //gtk_window_set_position(GTK_WINDOW(mainWindow), GTK_WIN_POS_CENTER_ALWAYS);
-    //gtk_container_set_border_width(GTK_CONTAINER(mainWindow), 14);
-    //    if (Transient == TRUE)
-    //      gtk_window_set_transient_for(GTK_WINDOW(mainWindow), GTK_WINDOW(mainWindow));
-
-
+    // set name for songLabel an try set CSS style
     songLabel->set_name("songLabel");
 
+
+    //Cairo
+
+    //mainWindow->signal_event().connect(sigc::mem_fun(*this, &MainWindow::onExposeEvent));
+
+
     // CSS
-    Glib::RefPtr<Gtk::CssProvider> provider = Gtk::CssProvider::create();
+    Glib::RefPtr<Gtk::CssProvider> provider = Gtk::CssProvider::get_default();
     Glib::RefPtr<Gdk::Display> display = Gdk::Display::get_default();
-    //Glib::RefPtr<Gdk::Display> screen = Gdk::Display::open(display->get_name());
 
     Gtk::StyleContext::add_provider_for_screen(display->get_default_screen(), provider, GTK_STYLE_PROVIDER_PRIORITY_USER);
     try {
       provider->load_from_file(Gio::File::create_for_path("theme/default.css"));
-      //provider->load_from__data("@import url (\"theme/default.css\");\n");
     } catch (Glib::Error e) {
       std::cout << e.what() << std::endl;
     }
 
 
 
-
-
-    // zaregistrujeme posluchače pro GUI
-    clientMPD->addListener(*this);
-
     //Inicializace oken
-    sourcesWindow = new Sources(clientSettings);
+    sourcesWindow = new Sources();
 
     sourceSettings->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::showSourcesWindow));
 
-    settingsWindow = new Settings(clientMPD, clientSettings);
+    settingsWindow = new Settings();
 
     progSettings->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::showSettingsWindow));
 
-    //    test = new TextWidget();
-    //
-    //    test->setText("Ahoj, tohle je nový widget");
-    //    hBox->add(*test);
+    connect->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_connect));
+    disconnect->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_disconnect));
+    info->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_info_mpd));
+    update->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_update_mpd_db));
 
-
-    // Inicializace Widgetů
+    // Widgets initialization
+    ///////////////////////
 
 
     // Control widget
+    builder->get_widget("timeScale", timeScale);
+    builder->get_widget("timeEventBox", timeEventBox);
+    builder->get_widget("volumeScale", volumeScale);
     builder->get_widget("first", first);
     builder->get_widget("back", back);
     builder->get_widget("play", play);
-    builder->get_widget("playIcon", playIcon);
+    builder->get_widget("playImage", playImage);
+    builder->get_widget("pauseImage", pauseImage);
     builder->get_widget("stop", stop);
     builder->get_widget("next", next);
     builder->get_widget("last", last);
 
+    first->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_first));
     back->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_back));
     play->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_playOrPause));
     stop->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_stop));
     next->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_next));
+    last->signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_last));
 
+    // connect signals to scale widgets
+    timeEventBox->add_events(Gdk::BUTTON_PRESS_MASK);
+    timeEventBox->signal_button_press_event().connect(sigc::mem_fun(*this, &MainWindow::setTime));
+    volumeScale->signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::setVolume));
+
+
+    clientMPD.UpdateStatus();
+
+    // article widget
+    articlesWidget = new ArticlesWidget(builder);
 
     // slideshow widget
-    builder->get_widget("slide", slide);
+    slideshowWidget = new SlideshowWidget(builder);
+    //    slideshowWidget->setSlideshowWidget(slideList);
+    slideshowWidget->showLoading();
 
 
-//    // aktualizujeme GUI, pokud se právě přehravá
-    //mpd_state state = clientMPD->getClientState();
-//    if (state == MPD_STATE_PLAY) {
-//      playerEvent();
-//      play->set_active(true);
-//    } else if (state == MPD_STATE_PAUSE) {
-//      playerEvent();
-//    }
+    // artists widget
+    artistsWidget = new ArtistsWidget(builder);
 
 
+    // cover widget
+    coverWidget = new CoverWidget(builder);
 
-    TextWidget * textWidget = new TextWidget();
-    // test html v labelu
-    textWidget->setText(std::string("The Beatles were an iconic rock group from Liverpool, England. They are frequently cited as the most commercially successful and critically acclaimed band in modern history, with innovative music, a cultural impact that helped define the 1960s and an enormous influence on music that is still felt today. Currently, The Beatles are one of the two musical acts to sell more than 1 billion records, with only Elvis Presley having been able to achieve the same feat. <a href=\"http://www.seznam.cz\" title=\"odkaz titulek\">Odkaz</a>"));
-
-    //    hBox->add(*textWidget);
-
-    textLabel->set_markup("The Beatles were an iconic rock group from Liverpool, England. They are frequently cited as the most commercially successful and critically acclaimed band in modern history, with innovative music, a cultural impact that helped define the 1960s and an enormous influence on music that is still felt today. Currently, The Beatles are one of the two musical acts to sell more than 1 billion records, with only Elvis Presley having been able to achieve the same feat. <a href=\"http://www.seznam.cz\" title=\"odkaz titulek\">Odkaz</a>");
+    // update player
+    updateGUI();
+    // plan cyclic update fo 500 mili seconds
+    updateTimeout = Glib::signal_timeout().connect(
+            sigc::mem_fun(*this, &MainWindow::updateGUI), 1000);
   }
 
 
   MainWindow::~MainWindow() {
+    // delete widgets
+    delete articlesWidget;
+    delete slideshowWidget;
+    delete artistsWidget;
+  }
 
+
+  void MainWindow::showDialogs() {
+    if (dialogs.empty()) return;
+
+    while (!dialogs.empty()) {
+      Dialog d = dialogs.top();
+      if (d.type.compare("error") == 0) {
+        showErrorDialog(d.message);
+      } else if (d.type.compare("info") == 0) {
+        showInfoDialog(d.message);
+      }
+      dialogs.pop();
+    }
+  }
+
+
+  bool MainWindow::onExposeEvent(GdkEvent *event) {
+    std::cout << event->type << std::endl;
+    if (event->type == GDK_WINDOW_STATE) {
+      std::cout << "expose evend" << std::endl;
+      Cairo::RefPtr<Cairo::Context> windowContext = mainWindow->get_window()->create_cairo_context();
+
+      windowContext->set_operator(Cairo::OPERATOR_XOR);
+
+      windowContext->set_source_rgba(100, 100, 100, 0.1);
+      windowContext->paint();
+    }
+    //windowContext->paint_with_alpha(0.1);
+
+    // this is just for testing if I can paint ANYTHING onto the transparent window: 
+    //    windowContext->set_operator(Cairo::OPERATOR_ADD);
+    //    windowContext->set_line_width(10.0);
+    //    windowContext->move_to(0, 0);
+    //    windowContext->line_to(100, 100);
+    //    windowContext->stroke();
+    //    mainWindow->show_all_children(true);
+    GDK_EVENT_STOP;
+    return false;
   }
 
 
@@ -230,37 +272,34 @@ namespace GUI {
 
 
   void MainWindow::showErrorDialog(std::string text) {
+    // if window is not realized, we accumulate dialogs
+    if (!mainWindow->get_realized()) {
+      Dialog d;
+      d.type = "error";
+      d.message = text;
+
+      dialogs.push(d);
+      return;
+    }
+
     Gtk::MessageDialog dialog(*this->getWindow(), text.c_str(), false, Gtk::MESSAGE_ERROR);
     dialog.run();
   }
 
 
   void MainWindow::showInfoDialog(std::string text) {
+    // if window is not realized, we accumulate dialogs
+    if (!mainWindow->get_realized()) {
+      Dialog d;
+      d.type = "info";
+      d.message = text;
+
+      dialogs.push(d);
+      return;
+    }
+
     Gtk::MessageDialog dialog(*this->getWindow(), text.c_str(), false, Gtk::MESSAGE_INFO);
     dialog.run();
-  }
-
-
-  bool MainWindow::onExposeEvent(GdkEventExpose *event) {
-
-    std::cout << "expose evend" << std::endl;
-    Cairo::RefPtr<Cairo::Context> windowContext = mainWindow->get_window()->create_cairo_context();
-
-    windowContext->set_operator(Cairo::OPERATOR_XOR);
-
-    //    windowContext->set_source_rgba(255, 255, 255, 0.6);
-    //    
-    //    windowContext->paint_with_alpha(1.0);
-
-    // this is just for testing if I can paint ANYTHING onto the transparent window: 
-    //    windowContext->set_operator(Cairo::OPERATOR_ADD);
-    //    windowContext->set_line_width(10.0);
-    //    windowContext->move_to(0, 0);
-    //    windowContext->line_to(100, 100);
-    //    windowContext->stroke();
-    mainWindow->show_all_children(true);
-
-    return true;
   }
 
 
@@ -280,49 +319,78 @@ namespace GUI {
 
 
   /**
-   * Metoda pro překreslení GUI při aktualizaci skladby
-   * v MPD serveru
+   * Method to update GUI. We call it every one second.
    */
-  void MainWindow::playerEvent() {
-    std::cout << "jsem v události" << std::endl;
-    MPD::Song song;
+  bool MainWindow::updateGUI() {
 
-    // zjistíme aktuální přehrávanou skladbu
-    clientMPD->getCurrentSong(song);
+    // we show accumulated dialogs
+    showDialogs();
 
-    //aktualizujeme widgety
-    setSongLabel(song.getArtistAndSongName());
+    // update client status
+    clientMPD.UpdateStatus();
 
-    setSongArtist(song.artist());
-    setSongName(song.title());
-    setSongAlbum(song.album());
-    setSongGenre(song.genre());
-    setSongLength(song.getDurationInString());
-    setSongWebpage("<a href=\"http://www.impc.cz\">IMPC</a>");
+    if (clientMPD.Connected()) {
+      MPD::PlayerState s = clientMPD.GetState();
 
-    // aktualizujeme stavovou lištu
-    std::string x("Právě hrajeme: ");
-    x.append(song.uri());
-    setStatusBarTitle(x.data());
+      if (s == MPD::psPlay) {
+        play->set_active(true);
+        play->set_image(*pauseImage);
 
-    // TODO nastavení obalu
-    setCover("ui/794121.jpg");
-    slide->set("ui/bg_test2.jpg");
-    //    std::string webHTML;
-    //    utils::loadStringFromFile("test/lastfm_beatles_text", webHTML);
-    //    HTMLParser page = HTMLParser(webHTML);
-    //    std::list<std::string> l = page.getParagraphList();
-    //    setTextLabel(l.front());
+        // update time scale widget
+        setTimeScale(clientMPD.GetElapsedTime(), clientMPD.GetTotalTime());
+
+        // we set default volume
+        volumeScale->set_value(clientMPD.GetVolume());
+
+        MPD::Song song = clientMPD.GetCurrentSong();
+        if (!song.Empty()) {
+          // update text widgets
+          setAlbum(song.GetAlbum());
+          setArtist(song.GetArtist());
+          setSongLabel(song.GetArtist() + " - " + song.GetTitle());
+          setGenre(song.GetGenre());
+          setTitle(song.GetTitle());
+        }
+
+        std::stringstream bitrate;
+        bitrate << clientMPD.GetBitrate();
+        bitrate << " kbit/s";
+
+        songBitrate->set_text(bitrate.str());
+
+        // load new info to widgets
+        articlesWidget->updateArticlesWidget();
+        slideshowWidget->updateSlideshowWidget();
+//        coverWidget->updateCoverWidget();
+
+        //        Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_file("ui/bg_test2.jpg");
+        //        p = p->add_alpha(1, 0, 255, 0);
+        //p = p->scale_simple(100,100,Gdk::INTERP_BILINEAR);
+
+      } else if (s == MPD::psPause) {
+        play->set_active(false);
+        play->set_image(*playImage);
+      } else if (s == MPD::psStop) {
+        on_stop();
+      }
+      return true;
+    }
   }
 
 
-  Gtk::Window * MainWindow::getWindow() {
+  Gtk::Window * MainWindow::getWindow() const {
     return mainWindow;
   }
 
 
-  void MainWindow::setCover(std::string filename) {
-    picture->set(filename.c_str());
+  void MainWindow::setAlbumCover(std::string filename) {
+    if (Glib::file_test(filename.c_str(), Glib::FILE_TEST_EXISTS))
+      albumCover->set(filename.c_str());
+  }
+
+
+  void MainWindow::setAlbumCover(const Glib::RefPtr<Gdk::Pixbuf> p) {
+    albumCover->set(p);
   }
 
 
@@ -332,80 +400,225 @@ namespace GUI {
   }
 
 
-  void MainWindow::setSongArtist(std::string name) {
+  void MainWindow::setArtist(std::string name) {
     if (!songArtist) return;
     songArtist->set_label(name.c_str());
   }
 
 
-  void MainWindow::setSongName(std::string name) {
+  void MainWindow::setTitle(std::string name) {
     if (!songName) return;
     songName->set_label(name.c_str());
   }
 
 
-  void MainWindow::setSongAlbum(std::string name) {
+  void MainWindow::setAlbum(std::string name) {
     if (!songAlbum) return;
     songAlbum->set_label(name.c_str());
   }
 
 
-  void MainWindow::setSongGenre(std::string length) {
+  void MainWindow::setGenre(std::string length) {
     if (!songGenre) return;
     songGenre->set_label(length.c_str());
   }
 
 
-  void MainWindow::setSongLength(std::string genre) {
-    if (!songLength) return;
-    songLength->set_label(genre.c_str());
+  void MainWindow::setBitrate(std::string genre) {
+    if (!songBitrate) return;
+    songBitrate->set_label(genre.c_str());
   }
 
 
-  void MainWindow::setSongWebpage(std::string markupWebpage) {
+  void MainWindow::setWebpage(std::string url) {
     if (!songWebpage) return;
-    songWebpage->set_markup(markupWebpage.c_str());
+    // create markup url
+    std::string mUrl = "<a href=\"" + url + "\">" + url + "</a>";
+    songWebpage->set_markup(mUrl);
   }
 
 
-  void MainWindow::setTextLabel(std::string text) {
-    if (!textLabel) return;
-    textLabel->set_label(text.c_str());
+  void MainWindow::setArtistAbout(std::string text) {
+    if (!artistAbout) return;
+    artistAbout->set_markup(text.c_str());
   }
 
 
-  void MainWindow::setStatusBarTitle(std::string text) {
+  void MainWindow::setArtistTitle(std::string title) {
+    if (!artistTitle) return;
+    artistTitle->set_label(title.c_str());
+  }
+
+
+  void MainWindow::setArtistSource(std::string iconpath, std::string name, std::string url) {
+    if ((!artistSourceIcon) || (!artistSourceName) || (!artistSourceUrl)) return;
+    artistSourceIcon->set(iconpath.c_str());
+    artistSourceName->set_label(name.c_str());
+
+    // create markup url
+    std::string mUrl = "<a href=\"" + url + "\">" + url + "</a>";
+    artistSourceUrl->set_markup(mUrl);
+  }
+
+
+  void MainWindow::setStatusBar(std::string text) {
     if (!statusBar) return;
     statusBar->push(text.c_str());
   }
 
 
   void MainWindow::on_back() {
-    clientMPD->previousSong();
+    clientMPD.Prev();
   }
 
 
   void MainWindow::on_playOrPause() {
 
     if (play->get_active()) {
-      playIcon->set_from_icon_name(GTK_STOCK_MEDIA_PAUSE, Gtk::ICON_SIZE_BUTTON);
-      clientMPD->play();
+      clientMPD.Play();
+      //      play->set_active(true);
+      play->set_image(*pauseImage);
+
     } else {
-      playIcon->set_from_icon_name(GTK_STOCK_MEDIA_PLAY, Gtk::ICON_SIZE_BUTTON);
-      clientMPD->pause();
+      clientMPD.Pause(true);
+      //      play->set_active(false);
+      play->set_image(*playImage);
+      setStatusBar(_("IMPC Paused"));
     }
   }
 
 
   void MainWindow::on_stop() {
-    clientMPD->stop();
+    clientMPD.Stop();
+    if (play->get_active()) {
+
+      clientMPD.Pause(true);
+
+      // set play icon
+      play->set_active(false);
+      play->set_image(*playImage);
+    }
+    setAlbum("");
+    setArtist("");
+    setBitrate("");
+    setGenre("");
+    setTimeScale(0, 0);
+    setTitle("");
+
+    setStatusBar(_("IMPC Stopped"));
   }
 
 
   void MainWindow::on_next() {
-    clientMPD->nextSong();
+    clientMPD.Next();
   }
 
+
+  void MainWindow::on_connect() {
+
+    clientMPD.Connect();
+
+    //set sensitive on controls
+    first->set_sensitive(true);
+    back->set_sensitive(true);
+    play->set_sensitive(true);
+    stop->set_sensitive(true);
+    next->set_sensitive(true);
+    last->set_sensitive(true);
+    volumeScale->set_sensitive(true);
+    timeScale->set_sensitive(true);
+
+
+    if (clientMPD.Connected()) {
+      setStatusBar(_("IMPC Connected"));
+    }
+
+  }
+
+
+  void MainWindow::on_disconnect() {
+    //set sensitive on controls
+    first->set_sensitive(false);
+    back->set_sensitive(false);
+    play->set_sensitive(false);
+    stop->set_sensitive(false);
+    next->set_sensitive(false);
+    last->set_sensitive(false);
+    volumeScale->set_sensitive(false);
+    timeScale->set_sensitive(false);
+
+    setStatusBar(_("IMPC Disconnected"));
+
+    clientMPD.Disconnect();
+  }
+
+
+  void MainWindow::on_update_mpd_db() {
+    clientMPD.UpdateDirectory("");
+  }
+
+
+  void MainWindow::on_info_mpd() {
+    //    MPD::TagList l;
+    //    clientMPD.GetList
+  }
+
+
+  void MainWindow::setVolume(double vol) {
+    clientMPD.SetVolume(vol);
+  }
+
+
+  bool MainWindow::setTime(GdkEventButton * e) {
+
+    if (clientMPD.isPlaying()) {
+      double fraction = e->x / timeScale->get_width() * clientMPD.GetTotalTime();
+      clientMPD.Seek(fraction);
+      setTimeScale(fraction, clientMPD.GetTotalTime());
+    }
+    return true;
+  }
+
+
+  void MainWindow::setTimeScale(double elapsedTime, double totalTime) {
+    timeScale->set_fraction(elapsedTime / totalTime);
+    timeScale->set_text(clientMPD.GetCurrentSong().GetLength(elapsedTime) + " / " + clientMPD.GetCurrentSong().GetLength(totalTime));
+  }
+
+
+  void MainWindow::feedbackSwitch() {
+    if (!showFeedbackButtons->get_active()) {
+      coverRight->hide();
+      coverWrong->hide();
+      artistRight->hide();
+      artistWrong->hide();
+      articleRight->hide();
+      articleWrong->hide();
+      slideRight->hide();
+      slideWrong->hide();
+    } else {
+      coverRight->show();
+      coverWrong->show();
+      artistRight->show();
+      artistWrong->show();
+      articleRight->show();
+      articleWrong->show();
+      slideRight->show();
+      slideWrong->show();
+    }
+  }
+
+
+  void MainWindow::on_first() {
+    clientMPD.PlayID(0);
+  }
+
+
+  void MainWindow::on_last() {
+    if (clientMPD.GetPlaylistLength() == 0) return;
+
+    clientMPD.PlayID(clientMPD.GetPlaylistLength());
+  }
 
 
 }

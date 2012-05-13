@@ -20,99 +20,304 @@
 /**
  * @file http.cpp
  * @author Tomas Wagner (xwagne01@stud.fit.vutbr.cz)
- * @brief Class for implementation access to HTTP protocol.
+ * @brief Class implements access to HTTP protocol.
  */
 
 #define DEBUG 0
+#define DEBUGDOWNLOADED 0
+#include <fstream>
 
 #include "http.h"
+#include <iostream>
 
 namespace utils {
 
 
-  HTTP::HTTP() {
-    // inicializujeme curl
+  HTTP::HTTP() : httpTimeout(0),
+  headers(NULL) {
+
+
+    // init curl
+    curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
 
-    // nastavíme curl header na prohlížeč
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6");
-
-    // povolíme max. 5 přesměrování
+    // accept max 5 redirs
     curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 5);
+#if DEBUG    
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+#endif
+
+    // follow redirections
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+
+    // create cookie file
+
+
+    // cookies file
+    curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "/tmp/impc_cookies.txt");
+
+    // create head log
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &writeText);
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headLog);
+
+
+    // FAKE BROWSER BEHAVIOR
+    // setting chrome header identification
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.83 Safari/535.11");
+    headers = curl_slist_append(headers, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    //TODO curl_slist_append(headers, "Accept-Encoding:gzip,deflate,sdch");
+    curl_slist_append(headers, "Accept-Language: en-US,en;q=0.8");
+    curl_slist_append(headers, "Accept-Charset: utf-8;q=0.7,*;q=0.3");
+    curl_slist_append(headers, "Connection: keep-alive");
+    curl_slist_append(headers, "Cache-Control:max-age=0");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   }
 
 
   HTTP::~HTTP() {
-    // vyčístíme curl
+
+    // clean header list
+    curl_slist_free_all(headers);
+    // cleanup curl
     curl_easy_cleanup(curl);
+    curl_global_cleanup();
   }
 
 
-  std::string HTTP::escapeUrl(std::string url) {
-    std::string esc = curl_easy_escape(curl, url.c_str(), url.length());
-    return esc;
+  void HTTP::setMaxRequestTimeout(int seconds) {
+    httpTimeout = seconds;
   }
 
 
-  void HTTP::GET(std::string url, std::string& buffer) throw (InputException) {
+  void HTTP::wait() {
+    if (httpTimeout == 0) return;
+
+    // sleep for seconds
+    sleep(rand() % httpTimeout);
+  }
+
+
+  /**
+   * Escape input string for using in url.
+   * @param s
+   * @return 
+   */
+  std::string HTTP::escape(std::string s) {
+    char *cs = curl_easy_escape(0, s.c_str(), s.length());
+    std::string result(cs);
+    curl_free(cs);
+    return result;
+  }
+
+
+  /**
+   * HTTP GET Method
+   * @param url - url to download with GET params
+   * @param &buffer - returned text output
+   * @return redirect url
+   */
+  std::string HTTP::GET(std::string url, std::string& buffer) throw (InputException) {
     char errorBuffer[CURL_ERROR_SIZE];
+    std::string redirect = url;
+    char *ct = NULL;
 
-    // chybová detekce
+    // wait for timeout
+    wait();
+
+
+    // error detection
     CURLcode result;
 
     if (curl) {
+
       curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer);
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
       curl_easy_setopt(curl, CURLOPT_HEADER, 0);
-      curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeText);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+
 
       // vyšleme požadavek curl
       result = curl_easy_perform(curl);
 
+      if (CURLE_OK == result) {
 
+        // ask for the content-type
+        result = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+        if ((CURLE_OK == result) && ct) {
+#if DEBUG 
+          printf("HTTP: We received Content-Type: %s\n", ct);
+#endif
+        }
+        // ask for redirection
+        result = curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &ct);
+        if ((CURLE_OK == result) && ct) {
+#if DEBUG
+          printf("HTTP: We were redirected to: %s\n", ct);
+#endif    
+          redirect.assign(ct);
+        }
 
-      // Pokud jsme neuspěli, vracíme výjimku s chybou
+        //        result = curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &ct);
+        //        if ((CURLE_OK == result) && ct) {
+        //#if DEBUG
+        //          printf("HTTP: Content length: %s\n", ct);
+        //#endif    
+        //          //redirect.assign(ct);
+        //        }
+      }
+
+#if DEBUGDOWNLOADED
+      std::cout << "HTML DOWNLOADED:" << buffer << std::endl;
+#endif 
+      // exception on error
       if (result != CURLE_OK) {
         InputException e("HTTP GET: Curl Error: " + std::string(errorBuffer));
         throw e;
       }
     }
+
+    return redirect;
   }
 
 
-  void HTTP::POST(std::string url, std::string params, std::string& output) throw (InputException) {
+  /**
+   * HTTP POST Method
+   * @param url - url to download without POST params
+   * @param params - POST params
+   * @param &buffer - returned text output
+   * @return redirect url
+   */
+  std::string HTTP::POST(std::string url, std::string params, std::string& output) throw (InputException) {
     char errorBuffer[CURL_ERROR_SIZE];
+    std::string http_code;
+    std::string redirect = url;
+    char *ct = NULL;
+
+    // wait for timeout
+    wait();
 
     // error detection
     CURLcode result;
-    
+
     if (curl) {
       curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer);
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
       curl_easy_setopt(curl, CURLOPT_HEADER, 0);
-      curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+      /**
+       * Post Redirection - if we cant set this, the next redir is GET method
+      0 -> do not set any behavior
+      1 -> follow redirect with the same type of request only for 301 redirects.
+      2 -> follow redirect with the same type of request only for 302 redirects.
+      3 -> follow redirect with the same type of request both for 301 and 302 redirects.*/
+      curl_easy_setopt(curl, CURLOPT_POSTREDIR, 3);
+
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeText);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, &output);
+      //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 
       // POST data
+      curl_easy_setopt(curl, CURLOPT_POST, 1);
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, params.c_str());
+
+      //curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
       // send request
       result = curl_easy_perform(curl);
-      
+
+
+      if (CURLE_OK == result) {
+
+
+        // ask for the content-type
+        result = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+        printf("result %d", result);
+        if ((CURLE_OK == result)) {
+#if DEBUG
+          printf("HTTP: We received Content-Type: %s\n", ct);
+#endif
+        }
+        // ask for redirection
+        result = curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &ct);
+        if ((CURLE_OK == result) && ct) {
+#if DEBUG
+          printf("HTTP: We were redirected to: %s\n", ct);
+#endif
+          redirect.assign(ct);
+        }
+
+      }
+
       // exception on request error
       if (result != CURLE_OK) {
         InputException e("HTTP POST: Curl Error: " + std::string(errorBuffer));
         throw e;
       }
     }
+
+    return redirect;
   }
 
 
+  bool HTTP::POSTFile(std::string url, std::string filePath, std::string& output) throw (InputException) {
+    char errorBuffer[CURL_ERROR_SIZE];
+    std::string http_code;
+    std::string redirect = url;
+    char *ct = NULL;
+
+    // wait for timeout
+    wait();
+
+    // error detection
+    CURLcode result;
+
+    struct curl_httppost *post = NULL;
+    struct curl_httppost *last = NULL;
+
+    if (curl) {
+      curl_formadd(&post, &last, CURLFORM_COPYNAME, "file", CURLFORM_FILE, filePath.c_str(), CURLFORM_END);
+      //Specify the API Endpoint
+      curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+      //Specify the HTTP Method
+      result = curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+
+      //      curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer);
+      //      curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+      //      curl_easy_setopt(curl, CURLOPT_HEADER, 1);
+      //      /**
+      //       * Post Redirection - if we cant set this, the next redir is GET method
+      //      0 -> do not set any behavior
+      //      1 -> follow redirect with the same type of request only for 301 redirects.
+      //      2 -> follow redirect with the same type of request only for 302 redirects.
+      //      3 -> follow redirect with the same type of request both for 301 and 302 redirects.*/
+//            curl_easy_setopt(curl, CURLOPT_POSTREDIR, 3);
+      //
+      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeText);
+      curl_easy_setopt(curl, CURLOPT_WRITEDATA, &output);
+//      curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+
+      // send request
+      result = curl_easy_perform(curl);
+
+
+      // exception on request error
+      if (result != CURLE_OK) {
+        InputException e("HTTP POST: Curl Error: " + std::string(errorBuffer));
+        throw e;
+      }
+    }
+    curl_formfree(post);
+    return true;
+  }
+
+
+  /**
+   * Method returns filename from url or empty string
+   * @param url
+   * @return 
+   */
   std::string HTTP::getFilenameFromUrl(std::string url) {
-    size_t found;
+    std::size_t found;
     found = url.find_last_of("/\\");
     if (found != std::string::npos)
       return url.substr(found + 1);
@@ -120,47 +325,98 @@ namespace utils {
   }
 
 
-  int HTTP::writeText(char *data, size_t size, size_t nmemb, std::string * buffer) {
+  /**
+   * Curl text write function.
+   * @param data
+   * @param size
+   * @param nmemb
+   * @param buffer
+   * @return 
+   */
+  int HTTP::writeText(char *data, std::size_t size, std::size_t nmemb, std::string * buffer) {
     // What we will return
     int result = 0;
 
-    // Is there anything in the buffer?
-    if (buffer != NULL) {
-      // Append the data to the buffer
-      buffer->append(data, size * nmemb);
+    buffer->append(data, size * nmemb);
 
-      // How much did we write?
-      result = size * nmemb;
-    }
+    result = size * nmemb;
+
 
     return result;
   }
 
 
-  size_t HTTP::writeBinary(void *data, size_t size, size_t nmemb, FILE *stream) {
-    size_t written = fwrite(data, size, nmemb, stream);
+  /**
+   * Curl binary write function.
+   * @param data
+   * @param size
+   * @param nmemb
+   * @param stream
+   * @return 
+   */
+  std::size_t HTTP::writeBinary(void *data, std::size_t size, std::size_t nmemb, FILE * stream) {
+    std::size_t written = fwrite(data, size, nmemb, stream);
     return written;
   }
 
 
-  void HTTP::GETImage(std::string url, std::string path) throw (InputException) {
+  /**
+   * Function download image to path with optional filename
+   * @param url - url to image
+   * @param path - saving path
+   * @param filename - without extension
+   * @return filepath
+   */
+  std::string HTTP::GETImage(std::string url, std::string path, std::string filename) throw (InputException) {
     char errorBuffer[CURL_ERROR_SIZE];
-
-    // chybová detekce
-    CURLcode result;
-
+    CURLcode result; // error detection
     std::string filePath;
 
-    //TODO TMP složka
-    filePath.assign(path.c_str());
+    if (url.substr(0, 7).compare("http://") != 0) {
+      InputException e("HTTP GET Image: URL ERROR - detected non absolute url: ");
+      throw e;
+      filePath = "";
+      return filePath;
+    }
 
 
-    filePath.append(getFilenameFromUrl(url));
+    // create filepath
+    filePath = path.c_str();
+
+    if (filename.empty()) {
+      filePath += getFilenameFromUrl(url);
+    } else {
+      filePath += filename + getExtension(url);
+    }
+
+
+    // check if image doesn't exist
+    std::ifstream ifile(filePath.c_str());
+    if (ifile.is_open()) {
+
+      // detect if is binary or ascii file
+      int c;
+      while ((c = ifile.get()) != EOF && c <= 127);
+      if (c == EOF) {
+        // is ascii file, error
+        ifile.close();
+        filePath = "";
+        return filePath;
+      }
+      // OK, binary file, return path
+      ifile.close();
+      return filePath;
+    }
+
+    // wait for timeout
+    wait();
+
+
 #if DEBUG
     std::cout << "url:" << url << " ,Filename:" << filePath.c_str() << std::endl;
 #endif
 
-    // otevřeme výstupní soubor pro binární zápis
+    // open file for binary write
     FILE* fp = fopen(filePath.c_str(), "wb");
 
     if (curl) {
@@ -170,17 +426,55 @@ namespace utils {
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeBinary);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
 
-      // vyšleme požadavek curl
+      // send request
       result = curl_easy_perform(curl);
 
+      // close file
       fclose(fp);
 
-      // Pokud jsme neuspěli, vracíme výjimku s chybou
+
+      if (CURLE_OK == result) {
+
+        char * ct;
+        // ask for the content-type
+        result = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+        //        printf("result %d", result);
+
+        if ((CURLE_OK == result)) {
+          //          printf("HTTP: We received Content-Type: %s\n", ct);
+          std::string r;
+          r.assign(ct);
+
+          if (r.find("html") != std::string::npos) {
+            //            InputException e("HTTP GET Image: Content is not an image.");
+            //            throw e;
+            filePath = "";
+            return filePath;
+          }
+        }
+      }
+
+      // e
       if (result != CURLE_OK) {
-        InputException e("HTTP GET: Curl Error: " + std::string(errorBuffer));
+        InputException e("HTTP GET Image: Curl Error: " + std::string(errorBuffer));
         throw e;
       }
     }
+
+    return filePath;
   }
 
+
+  /**
+   * Method returns log of Head from HTTM communication.
+   * @return 
+   */
+  std::string & HTTP::getHeadLog() {
+    return headLog;
+  }
+
+
+  std::string HTTP::getExtension(std::string & url) {
+    return url.substr(url.length() - 4, 4);
+  }
 }

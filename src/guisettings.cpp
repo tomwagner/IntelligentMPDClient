@@ -28,12 +28,10 @@
 namespace GUI {
 
 
-  Settings::Settings(MPD::Client * client, ClientSettings * settings) :
-  clientMPD(client),
-  clientSettings(settings),
+  Settings::Settings() :
   mpdSettingChanged(false) {
     // nastavíme vlastnosti okna
-    set_title("Nastavení");
+    set_title(_("Settings"));
     set_size_request(400, 200);
     set_resizable(false);
     set_modal(true);
@@ -61,14 +59,14 @@ namespace GUI {
     tableMPD.set_spacings(6);
 
     // host
-    hostLabel.set_label("Host:");
+    hostLabel.set_label(_("Host:"));
     hostLabel.set_alignment(1.0, 0.5);
     tableMPD.attach(hostLabel, 0, 1, 0, 1);
     host.set_text(clientSettings->getHost());
     tableMPD.attach(host, 1, 2, 0, 1);
 
     //port
-    portLabel.set_label("Port:");
+    portLabel.set_label(_("Port:"));
     portLabel.set_alignment(1.0, 0.5);
     tableMPD.attach(portLabel, 0, 1, 1, 2);
     // nastavíme rozsahy
@@ -77,11 +75,11 @@ namespace GUI {
     tableMPD.attach(port, 1, 2, 1, 2);
 
     // authentification
-    auth.set_label("Use Authentication");
+    auth.set_label(_("Use Authentication"));
     auth.signal_toggled().connect(sigc::mem_fun(*this, &Settings::onAuthToggle));
     tableMPD.attach(auth, 1, 2, 2, 3);
 
-    passLabel.set_label("Password:");
+    passLabel.set_label(_("Password:"));
     passLabel.set_alignment(1.0, 0.5);
     tableMPD.attach(passLabel, 0, 1, 3, 4);
     pass.set_visibility(false);
@@ -113,7 +111,7 @@ namespace GUI {
     frameProg.set_shadow_type(Gtk::SHADOW_IN);
     frameProg.set_border_width(10);
     frameProgLabel.set_use_markup(true);
-    frameProgLabel.set_markup("<b>Client Settings</b>");
+    frameProgLabel.set_markup(_("<b>Client Settings</b>"));
     frameProg.set_label_widget(frameProgLabel);
 
     // tabulka
@@ -122,11 +120,11 @@ namespace GUI {
     tableProg.set_row_spacings(6);
     tableProg.set_spacings(6);
     //config
-    configLabel.set_label("Config dir:");
+    configLabel.set_label(_("Config dir:"));
     configLabel.set_alignment(1.0, 0.5);
     tableProg.attach(configLabel, 0, 1, 0, 1);
     tableProg.attach(config, 1, 2, 0, 1);
-    config.set_title("Select Config Directory");
+    config.set_title(_("Select Config Directory"));
     config.set_action(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
     config.signal_current_folder_changed().connect(sigc::mem_fun(*this, &Settings::onConfDirSelect));
 
@@ -226,12 +224,12 @@ namespace GUI {
 
 
   void Settings::onConfDirSelect() {
-    clientSettings->setConfPath(config.get_current_folder());
+    clientSettings->setConfPath(config.get_current_folder()+"/");
   }
 
 
   void Settings::onTempDirSelect() {
-    clientSettings->setTempPath(temp.get_current_folder());
+    clientSettings->setTempPath(temp.get_current_folder()+"/");
   }
 
 
@@ -239,13 +237,17 @@ namespace GUI {
     // pokud se změnilo nastavení konfigurace připojení k MPD
     if (mpdSettingChanged) {
       // odpojíme
-      clientMPD->disconnect();
+      clientMPD.Disconnect();
+
+      clientMPD.SetHostname(host.get_text());
+      clientMPD.SetPassword(pass.get_text());
+      clientMPD.SetPort(port.get_value());
 
       // zkusíme se připojit
-      if (!clientMPD->connect(host.get_text(), port.get_value(), pass.get_text())) {
+      if (!clientMPD.Connect()) {
 
         // zkusíme se připojit se starými údaji
-        //clientMPD->connect(clientSettings->getHost(), clientSettings->getPort(), clientSettings->getPassword());
+        //clientMPD.connect(clientSettings->getHost(), clientSettings->getPort(), clientSettings->getPassword());
 
         // zobrazíme dialog o chybě
         Gtk::MessageDialog dialog(*this, "Error in connecting to MPD", false, Gtk::MESSAGE_ERROR);
@@ -268,8 +270,8 @@ namespace GUI {
         clientSettings->setPassword("");
     }
 
-    clientSettings->setConfPath(config.get_current_folder());
-    clientSettings->setTempPath(temp.get_current_folder());
+    clientSettings->setConfPath(config.get_current_folder()+"/");
+    clientSettings->setTempPath(temp.get_current_folder()+"/");
 
     // skryjeme okno
     hide();

@@ -25,41 +25,51 @@
  */
 
 #include "clientsettings.h"
+#include <cassert>
 #define DEBUG 0
 
-const std::string DEFAULTCONFIGFILEPATH = "config/settings.json";
-const std::string DEFAULTSOURCESFILEPATH = "config/sources.json";
+ClientSettings * clientSettings = new ClientSettings;
 
-const std::string DEFAULTTEMPPATH = "tmp";
+
+
+const std::string DEFAULTHOME = "/.impc/";
 
 
 ClientSettings::ClientSettings() :
 m_host("localhost"),
 m_port(6600),
 m_password(""),
-m_confPath("config/"),
-m_tempPath("tmp") {
-  // načteme konfiguraci
-  load();
+m_confPath(""),
+m_tempPath(""),
+m_home(""),
+DEFAULTCONFIGFILEPATH(""),
+DEFAULTSOURCESFILEPATH("") {
 
-  if (m_tempPath.empty()) {
-    m_tempPath = DEFAULTTEMPPATH;
-  }
-  saveSettings();
+  // set home folder (ends with /)
+//  m_home += getenv("HOME");
+//  m_home += "/.impc/";
+
+  // set config and temp path
+  m_confPath = m_home + "config/"; 
+  m_tempPath = m_home + "tmp/";
+
+
+  // set config files
+  DEFAULTCONFIGFILEPATH = m_home + "config/settings.json";
+  DEFAULTSOURCESFILEPATH = m_home + "config/sources.json";
+  
+  // load client settings
+  loadClientSettings();
 }
 
 
 ClientSettings::~ClientSettings() {
-  //std::cout << "clientsettings destruktor" << std::endl;
-  // před ukončením uložíme
+  // save before exit
   save();
 
-  // vymažeme lokální seznam zdrojů
+  // clean
   initSourcesList();
 }
-
-
-
 
 
 void ClientSettings::setHost(std::string host) {
@@ -87,27 +97,27 @@ void ClientSettings::setTempPath(std::string path) {
 }
 
 
-std::string ClientSettings::getHost() {
+std::string ClientSettings::getHost() const {
   return m_host;
 }
 
 
-int ClientSettings::getPort() {
+int ClientSettings::getPort() const {
   return m_port;
 }
 
 
-std::string ClientSettings::getPassword() {
+std::string ClientSettings::getPassword() const {
   return m_password;
 }
 
 
-std::string ClientSettings::getConfPath() {
+std::string ClientSettings::getConfPath() const {
   return m_confPath;
 }
 
 
-std::string ClientSettings::getTempPath() {
+std::string ClientSettings::getTempPath() const {
   return m_tempPath;
 }
 
@@ -123,8 +133,7 @@ void ClientSettings::loadSettings() {
     content += line;
   in.close();
 
-
-  bool parsingSuccessful = reader.parse(content.c_str(), root);
+  bool parsingSuccessful = reader.parse(content, root);
 
   if (!parsingSuccessful) {
     std::cout << "Error in parsing settings.json file" << reader.getFormatedErrorMessages();
@@ -137,8 +146,8 @@ void ClientSettings::loadSettings() {
     m_host = settings["host"].asString();
     m_port = settings["port"].asInt();
     m_password = settings["password"].asString();
-    m_confPath = settings["confPath"].asString();
-    m_tempPath = settings["tempPath"].asString();
+//    m_confPath = settings["confPath"].asString();
+//    m_tempPath = settings["tempPath"].asString();
   }
 
 }
@@ -190,7 +199,7 @@ void ClientSettings::loadSources() {
   in.close();
 
 
-  bool parsingSuccessful = reader.parse(content.c_str(), root);
+  bool parsingSuccessful = reader.parse(content, root);
 
   if (!parsingSuccessful) {
     std::cout << "Error in parsing sources.json file" << reader.getFormatedErrorMessages();
@@ -245,7 +254,7 @@ void ClientSettings::saveSources() {
 }
 
 
-void ClientSettings::load() {
+void ClientSettings::loadClientSettings() {
   // načtu nastavení programu        
   loadSettings();
   // načtu zdroje

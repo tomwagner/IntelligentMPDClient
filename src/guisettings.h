@@ -25,15 +25,16 @@
 
 #ifndef GUISETTINGS_H
 #define	GUISETTINGS_H
-#include "global.h"
+
 #include <gtkmm-3.0/gtkmm.h>
+#include <glibmm-2.4/glibmm/i18n.h>
 #include "mpdclient.h"
 #include "clientsettings.h"
 namespace GUI {
 
   class Settings : public Gtk::Window {
   public:
-    Settings(MPD::Client * client, ClientSettings * settings);
+    Settings();
     virtual ~Settings();
   private:
     Gtk::Window * settingsWindow;
@@ -42,8 +43,7 @@ namespace GUI {
     // hlídá, zda bylo změněno nastavení mpd spojení
     bool mpdSettingChanged;
   protected:
-    MPD::Client * clientMPD;
-    ClientSettings * clientSettings;
+
     // signal handlers
     void onAuthToggle();
     void onConfDirSelect();

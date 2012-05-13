@@ -25,20 +25,24 @@
 
 #ifndef AGENTMANAGER_H
 #define	AGENTMANAGER_H
-#include "global.h"
 #include "agent.h"
 #include "clientsettings.h"
 #include "mpdclient.h"
+#include "thread.h"
 #include <list>
 
-class AgentManager : public MPD::Listener {
+class AgentManager {
 public:
-  AgentManager(MPD::Client * clientMPD, ClientSettings * clientSettings);
+  AgentManager(bool);
   virtual ~AgentManager();
+  
+  void runAgents();
+  void killAgents(); 
 private:
-  MPD::Client * clientMPD;
-  ClientSettings * clientSettings;
-  void playerEvent();
+  bool DISABLE_AGENTS;
+  xmlMutexPtr mutex;
+  
+  std::list<source*> sourcesList;
   std::list<Agent *> agentList;
 };
 

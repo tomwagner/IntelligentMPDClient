@@ -26,24 +26,44 @@
 #ifndef UTILS_H
 #define	UTILS_H
 
-#include "global.h"
 #include <fstream>
 #include <algorithm>
 #include <fcntl.h>
 #include <sstream>
+#include <vector>
+#include <cstring>
+
 
 namespace utils {
 
+  template <size_t N> void replace(std::string &s, const char (&from)[N], const char *to) {
+    size_t to_len = strlen(to);
+    for (size_t i = 0; (i = s.find(from, i)) != std::string::npos; i += to_len)
+      s.replace(i, N - 1, to);
+  }
+
   void loadStringFromFile(const char * filename, std::string &content);
+  void saveStringToFile(const char * filename, std::string &content);
   void setupCERRedirection(void);
   void redirectStdErrToNull(void);
   void restoreStdErr(void);
   std::string toUpper(std::string word);
+  std::string toLower(std::string word);
   std::string trim(const std::string& pString);
   bool ci_stringCompare(const std::string& str1, const std::string& str2);
+  /**
+   * Case insensitive string contains
+   * @param string - string
+   * @param contains - substring
+   * @return 
+   */
   bool ci_stringContains(const std::string& str1, const std::string& str2);
   std::string removeMultipleWhiteSpaces(std::string s);
   std::string intToString(int number);
+  std::vector<std::string> explode(const std::string &delimiter, const std::string &str);
+  int distance(const std::string source, const std::string target);
+  void htmlSpecialChars(std::string &s);
+  void removeTabulators(std::string &s);
 }
 
 

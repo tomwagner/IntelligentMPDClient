@@ -26,9 +26,10 @@
 #ifndef HTTP_H
 #define	HTTP_H
 
-#include "global.h"
 #include "ClientException.h"
+#include <cstdlib>
 #include <curl/curl.h>
+
 
 namespace utils {
 
@@ -36,18 +37,32 @@ namespace utils {
   public:
     HTTP();
     ~HTTP();
-    void GET(std::string url, std::string& output) throw (InputException);
-    void GETImage(std::string url, std::string tmpURL) throw (InputException);
-    void POST(std::string url, std::string params, std::string& output) throw (InputException);
 
-    std::string escapeUrl(std::string url);
+    void setMaxRequestTimeout(int seconds);
+
+
+    std::string GET(std::string url, std::string& output) throw (InputException);
+    std::string GETImage(std::string url, std::string tmpURL, std::string filename = "") throw (InputException);
+    std::string POST(std::string url, std::string params, std::string& output) throw (InputException);
+
+    bool POSTFile(std::string url, std::string filePath, std::string& output) throw (InputException);
+
+
+    static std::string escape(std::string s);
+    std::string getFilenameFromUrl(std::string url);
   private:
     CURL *curl;
-    
-    
-    static size_t writeBinary(void *ptr, size_t size, size_t nmemb, FILE *stream);
-    static int writeText(char *data, size_t size, size_t nmemb, std::string * buffer);
-    std::string getFilenameFromUrl(std::string url);
+    curl_slist * headers;
+    int httpTimeout;
+    std::string headLog;
+
+    void wait();
+
+    static size_t writeBinary(void *ptr, std::size_t size, std::size_t nmemb, FILE * stream);
+    static int writeText(char *data, std::size_t size, std::size_t nmemb, std::string * buffer);
+
+    std::string & getHeadLog();
+    std::string getExtension(std::string & url);
   };
 }
 #endif	/* HTTP_H */

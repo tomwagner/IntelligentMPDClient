@@ -27,40 +27,62 @@
 #ifndef MAINWINDOW_H
 #define	MAINWINDOW_H
 
-#include "global.h"
-#include "gtkmm-3.0/gtkmm.h"
-#include "mpdlistener.h"
+#include <gtkmm-3.0/gtkmm.h>
+#include <gtkmm-3.0/gtkmm/volumebutton.h>
+#include <glibmm/fileutils.h>
+#include <glibmm/ustring.h>
+
 #include "mpdclient.h"
 #include "utils.h"
 
 #include "guisources.h"
 #include "guisettings.h"
+#include "guiarticleswidget.h"
+#include "guislideshowwidget.h"
+#include "guiartistswidget.h"
 #include "guitextwidget.h"
+#include "guicoverwidget.h"
 #include "clientsettings.h"
 
+#include <stack>
 namespace GUI {
 
-  class MainWindow : public MPD::Listener {
+  typedef struct {
+    std::string type;
+    std::string message;
+  } Dialog;
+
+  class MainWindow {
   public:
-    MainWindow(MPD::Client * clientMPD, ClientSettings * clientSettings);
+    MainWindow();
     virtual ~MainWindow();
-    void show();
-    void setCover(std::string filename);
-    void redrawCover();
+
+
+    void setAlbumCover(std::string filepath);
+    void setAlbumCover(const Glib::RefPtr<Gdk::Pixbuf> p);
     void setSongLabel(std::string name);
-    void setSongArtist(std::string name);
-    void setSongName(std::string name);
-    void setSongGenre(std::string name);
-    void setSongLength(std::string length);
-    void setSongAlbum(std::string name);
-    void setSongWebpage(std::string markupWebpage);
-    void setTextLabel(std::string artistName);
-    void setStatusBarTitle(std::string text);
-    void playerEvent();
-    Gtk::Window * getWindow();
+    void setArtist(std::string name);
+    void setTitle(std::string name);
+    void setGenre(std::string name);
+    void setBitrate(std::string length);
+    void setAlbum(std::string name);
+    void setWebpage(std::string markupWebpage);
+
+
+    void setStatusBar(std::string text);
+    bool updateGUI();
+    void updatePlayer0(MPD::Client *, MPD::StatusChanges changed, void *);
+    Gtk::Window * getWindow() const;
+
+
+    // artist widget
+    void setArtistAbout(std::string);
+    void setArtistTitle(std::string);
+    void setArtistSource(std::string iconPath, std::string name, std::string url);
 
 
     void fullscreenSwitch();
+    void feedbackSwitch();
 
     // sources window
     void showSourcesWindow();
@@ -75,37 +97,97 @@ namespace GUI {
     void showErrorDialog(std::string text);
     void showInfoDialog(std::string text);
 
+    // control widget
+    void setVolume(double vol);
+    //    void setTime(double time);
+
+    bool setTime(GdkEventButton * button);
+    void setTimeScale(double elapsedTime, double totalTime);
+    void showDialogs();
   private:
-    GtkWidget * tray_menu;
-    bool onExposeEvent(GdkEventExpose *event);
-    int width;
-    int height;
+
+    Gtk::Widget * tray_menu;
+    bool onExposeEvent(GdkEvent * event);
   protected:
-    TextWidget *test;
+    // gui dialogs notification
+
+    std::stack<Dialog> dialogs;
+
+
+    sigc::connection updateTimeout;
+
+    // GUI Widgets
+  public:
+    ArticlesWidget* articlesWidget;
+    ArtistsWidget * artistsWidget;
+    SlideshowWidget* slideshowWidget;
+    CoverWidget* coverWidget;
+  protected:
     Gtk::Window* mainWindow;
-    Gtk::Box * hBox;
+
     Gtk::Label* songLabel;
     Gtk::Label* songArtist;
     Gtk::Label* songName;
     Gtk::Label* songGenre;
     Gtk::Label* songAlbum;
     Gtk::Label* songWebpage;
-    Gtk::Label* songLength;
-    Gtk::Label* textLabel;
-    Gtk::Image* picture;
+    Gtk::Label* songBitrate;
+
+    Gtk::Image* albumCover;
     Gtk::Statusbar* statusBar;
-    MPD::Client* clientMPD;
-    ClientSettings* clientSettings;
 
-    // Widgety klienta
-    //TextWidget textWidget;
 
-    // menu widgety
+    // menu widgets
+    Gtk::ImageMenuItem * connect;
+    Gtk::ImageMenuItem * restart;
+    Gtk::ImageMenuItem * disconnect;
+    Gtk::ImageMenuItem * info;
+    Gtk::ImageMenuItem * update;
     Gtk::ImageMenuItem * quit;
+    Gtk::CheckMenuItem * showFeedbackButtons;
     Gtk::CheckMenuItem * fullscreen;
     Gtk::ImageMenuItem * sourceSettings;
     Gtk::ImageMenuItem * progSettings;
     Gtk::ImageMenuItem * about;
+
+
+
+    // Control widget
+    Gtk::ProgressBar * timeScale;
+    Gtk::EventBox * timeEventBox;
+    Glib::RefPtr<Gtk::Adjustment> timeAdj;
+    Gtk::VolumeButton * volumeScale;
+
+    Gtk::Button * first;
+    Gtk::Button * back;
+    Gtk::ToggleButton * play;
+    Gtk::Image * playImage;
+    Gtk::Image * pauseImage;
+    Gtk::Button * stop;
+    Gtk::Button * next;
+    Gtk::Button * last;
+
+    Gtk::Image * playIcon;
+
+
+    // artist widget
+    Gtk::Label* artistTitle;
+    Gtk::Label* artistAbout;
+    Gtk::Image* artistSourceIcon;
+    Gtk::Label* artistSourceName;
+    Gtk::Label* artistSourceUrl;
+
+
+    // feedback widgets
+    Gtk::Button * coverRight;
+    Gtk::Button * coverWrong;
+    Gtk::Button * artistRight;
+    Gtk::Button * artistWrong;
+    Gtk::Button * articleRight;
+    Gtk::Button * articleWrong;
+    Gtk::Button * slideRight;
+    Gtk::Button * slideWrong;
+
 
     // dialog about
     Gtk::AboutDialog * aboutDialog;
@@ -118,27 +200,21 @@ namespace GUI {
     // okno settings
     Gtk::Window * settingsWindow;
 
-    // Control widget
-    Gtk::Button * first;
-    Gtk::Button * back;
-    Gtk::ToggleButton * play;
-    Gtk::Button * stop;
-    Gtk::Button * next;
-    Gtk::Button * last;
-    
-    Gtk::Image * playIcon;
-    
-    // slideshow widget
-    Gtk::Image* slide;
-
-    
     // events
+    void on_first();
     void on_back();
     void on_playOrPause();
     void on_stop();
     void on_next();
+    void on_last();
+
+    void on_connect();
+    void on_disconnect();
+    void on_update_mpd_db();
+    void on_info_mpd();
   };
 }
-
+extern Gtk::Main * kit;
+extern GUI::MainWindow * gui;
 #endif	/* GUI_H */
 

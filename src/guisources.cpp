@@ -30,8 +30,7 @@ namespace GUI {
   using std::strtol;
 
 
-  Sources::Sources(ClientSettings * settings) :
-  clientSettings(settings),
+  Sources::Sources() :
   m_validate_retry(false) {
     // nastavíme titulek okna
     set_title(_("Metadata source"));
@@ -56,10 +55,10 @@ namespace GUI {
     // přidáme vert. kontejner do okna
     add(vbox);
 
-    // vytvoříme scrolled window, očekáváme větší množství zdrojů
+    
     scrolledWindow.add(treeView);
 
-    // posouvátka ukážeme až to bude potřeba
+    // show scrollbars when needed
     scrolledWindow.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 
     vbox.pack_start(scrolledWindow);
@@ -82,22 +81,6 @@ namespace GUI {
     //Create the Tree model:
     treeModel = Gtk::ListStore::create(columns);
     treeView.set_model(treeModel);
-
-    //Fill the TreeView's model
-    //    Gtk::TreeModel::Row row = *(treeModel->append());
-    //    row[columns.active] = true;
-    //    row[columns.url] = "http://www.last.fm";
-    //
-    //
-    //    row = *(treeModel->append());
-    //    row[columns.active] = true;
-    //    row[columns.url] = "http://www.musicbrainz.com";
-    //
-    //
-    //    row = *(treeModel->append());
-    //
-    //    row[columns.active] = true;
-    //    row[columns.url] = "http://www.seznam.cz";
 
 
     //Add the TreeView's view columns:
@@ -199,15 +182,25 @@ namespace GUI {
   }
 
 
+  /**
+   * Method add new row at the start of list.
+   */
   void Sources::addRow() {
-    Gtk::TreeModel::Row row = *(treeModel->append());
+    Gtk::TreeModel::iterator i = treeModel->prepend();
+    Gtk::TreeModel::Row row = *(i);
 
     row[columns.active] = true;
     row[columns.url] = "http://";
+
+    treeView.scroll_to_row(treeModel->get_path(i));
+    treeView.set_cursor(treeModel->get_path(i));
     treeView.expand_all();
   }
 
 
+  /**
+   * Metod removes selected row
+   */
   void Sources::removeRow() {
     Glib::RefPtr<Gtk::TreeSelection> treeSelection = treeView.get_selection();
 

@@ -27,10 +27,12 @@
 #ifndef CLIENTSETTINGS_H
 #define	CLIENTSETTINGS_H
 
-#include "global.h"
+
+#include <iostream>
 #include <fstream>
 #include <jsoncpp/json/json.h>
 #include <list>
+#include <stdlib.h>
 
 typedef struct {
   bool active;
@@ -43,12 +45,12 @@ public:
   virtual ~ClientSettings();
 
   // get methods
-  std::string getHost();
-  int getPort();
-  std::string getPassword();
+  std::string getHost() const;
+  int getPort() const;
+  std::string getPassword() const;
 
-  std::string getConfPath();
-  std::string getTempPath();
+  std::string getConfPath() const;
+  std::string getTempPath() const;
 
 
   // set methods
@@ -59,22 +61,25 @@ public:
   void setConfPath(std::string path);
   void setTempPath(std::string path);
 
-  
+
   std::list<source*>& getSourcesList();
   void initSourcesList();
   void insertSource(bool active, std::string url);
-  
+
 private:
+  std::string m_home;
+  std::string DEFAULTCONFIGFILEPATH;
+  std::string DEFAULTSOURCESFILEPATH;
 
   void saveSources();
   void loadSources();
 
   void saveSettings();
   void loadSettings();
-  
+
   void save();
-  void load();
-  
+  void loadClientSettings();
+
 
 
   // client settings variables
@@ -87,6 +92,8 @@ private:
 
   std::list<source*> sourcesList;
 };
+
+extern ClientSettings * clientSettings;
 
 #endif	/* CLIENTSETTINGS_H */
 

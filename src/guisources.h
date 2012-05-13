@@ -25,7 +25,6 @@
 
 #ifndef SOURCESWINDOW_H
 #define	SOURCESWINDOW_H
-#include "global.h"
 #include <locale>
 #include <glibmm-2.4/glibmm/i18n.h>
 #include <gtkmm-3.0/gtkmm.h>
@@ -36,11 +35,10 @@ namespace GUI {
 
   class Sources : public Gtk::Window {
   public:
-    Sources(ClientSettings * settings);
+    Sources();
     virtual ~Sources();
 
   protected:
-    ClientSettings * clientSettings;
     //Signal handlers:
     void load();
     void save();

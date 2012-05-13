@@ -24,47 +24,79 @@
  */
 
 #include "agentmanager.h"
-#define DISABLE_AGENTS 1
+
+#include <iostream>
+//#define DISABLE_AGENTS 0
 
 
-AgentManager::AgentManager(MPD::Client * client, ClientSettings * settings) :
-clientMPD(client),
-clientSettings(settings) {
+AgentManager::AgentManager(bool status) : DISABLE_AGENTS(status) {
+  // init parser
+  xmlInitParser();
+}
 
 
+AgentManager::~AgentManager() {
+  // kill agents
+  killAgents();
+
+  xmlCleanupParser();
+}
+
+
+void AgentManager::runAgents() {
 
   if (DISABLE_AGENTS) return;
-  //std::cout << "AgentManager vytvořen" << std::endl;
 
-  // we create new agent 
-  std::list<source*> sourcesList = clientSettings->getSourcesList();
+  // if there is running agents, we kill them
+  if (!agentList.empty()) killAgents();
+
+  // load sources list
+  sourcesList = clientSettings->getSourcesList();
   std::list<source*>::iterator it;
+
+
+  // client not playing, we cant search
+  if (!clientMPD.Connected()) {
+    std::cout << "We are not connected to MPD! AGENT EXIT" << std::endl;
+    return;
+  }
+  clientMPD.UpdateStatus();
+  if (!clientMPD.isPlaying()) {
+    std::cout << "We are not playing MPD! AGENT EXIT" << std::endl;
+    return;
+  }
+  
+  // get now playing song
+  clientMPD.UpdateStatus();
+  MPD::Song s = clientMPD.GetCurrentSong();
+
+  // create Agents for searching content
   for (it = sourcesList.begin(); it != sourcesList.end(); it++) {
     // if source is active
     if ((*it)->active) {
-      Agent * jb007 = new Agent(clientMPD, clientSettings, (*it)->url);
+      Agent * jb007 = new Agent((*it)->url, s);
       agentList.push_back(jb007);
-      jb007->run();
     }
   }
 }
 
 
-AgentManager::~AgentManager() {
-
+/**
+ * Method kill all managed agents.
+ */
+void AgentManager::killAgents() {
   // we kill all created agents
   std::list<Agent *>::iterator it;
   for (it = agentList.begin(); it != agentList.end(); it++) {
     delete (*it);
   }
+
+
+  // clear list
+  agentList.clear();
 }
 
-//****************TODO*************
-void AgentManager::playerEvent() {
-//  // song changed, we change search keywords for Agents
-//  std::list<Agent *>::iterator it;
-//  for (it = agentList.begin(); it != agentList.end(); it++) {
-//    (*it).changeSearch();
-//  }
-}
+
+
+
 

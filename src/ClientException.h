@@ -26,8 +26,8 @@
 #ifndef CLIENTEXCEPTION_H
 #define	CLIENTEXCEPTION_H
 #include <exception>
-#include <stdio.h>
-#include <stdlib.h>
+#include <string>
+
 
 class ClientException : public std::exception {
 public:
@@ -55,12 +55,43 @@ public:
   }
 
   virtual const char * what() const throw () {
-    /*TODO*/
-    // při chybě vstupu, zavoláme GUI, vypíšeme error
     return m_what.c_str();
   }
   
   virtual ~InputException() throw () {
+  }
+private:
+  std::string m_what;
+};
+
+
+class Error : public std::exception {
+public:
+  Error(const std::string& what_arg) :
+  m_what(what_arg) {
+  }
+
+  virtual const char * what() const throw () {
+    return m_what.c_str();
+  }
+  
+  virtual ~Error() throw () {
+  }
+private:
+  std::string m_what;
+};
+
+class Warning : public std::exception {
+public:
+  Warning(const std::string& what_arg) :
+  m_what(what_arg) {
+  }
+
+  virtual const char * what() const throw () {
+    return m_what.c_str();
+  }
+  
+  virtual ~Warning() throw () {
   }
 private:
   std::string m_what;

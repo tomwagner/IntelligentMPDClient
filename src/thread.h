@@ -1,47 +1,54 @@
-/**
- * Copyright (C) 2012 Tomas Wagner <xwagne01@stud.fit.vutbr.cz>
- *
- * This file is part of impc (Intelligent Music Player Client).
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rrv.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/**
- * @file thread.h
- * @author Tomas Wagner (xwagne01@stud.fit.vutbr.cz)
- * @brief Class contains creating and managing thread.
- */
+//    Copyright (C) 2009 Dirk Vanden Boer <dirk.vdb@gmail.com>
+//
+//    This program is free software; you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation; either version 2 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program; if not, write to the Free Software
+//    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #ifndef THREAD_H
 #define	THREAD_H
 
-#include "global.h"
 #include <errno.h>
+
+extern "C"
+{
 #include <pthread.h>
+}
 
-class Thread {
+
+typedef void* (*ThreadFunction)(void* pInstance);
+
+class Thread
+{
 public:
-  Thread();
-  virtual ~Thread();
-  bool create(void * (void *));
-  bool join();
-  void cancel();
-private:
-  pthread_t pt; /* identifikace vlákna */
-  pthread_attr_t attr;
-  void *statp;
+    Thread(ThreadFunction pfnThreadFunction, void* pInstance);
+    ~Thread();
 
+    bool start();
+    void join();
+    void cancel();
+
+private:
+    struct InstancePointers
+    {
+        Thread* pThreadInstance;
+        void*   pRunInstance;
+    };
+
+    static void* onThreadStart(void* data);
+
+    pthread_t           m_Thread;
+    ThreadFunction      m_pfnThreadFunction;
+    InstancePointers    m_InstancePtrs;
 };
 
 #endif	/* THREAD_H */

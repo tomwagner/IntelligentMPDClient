@@ -26,16 +26,61 @@
 #ifndef STORAGE_H
 #define	STORAGE_H
 
-#include "global.h"
 #include "clientsettings.h"
+#include "mpdclient.h"
+#include "utils.h"
+#include "http.h"
+#include "sartist.h"
+#include "bayesclassificator.h"
 
-class Storage {
-public:
-  Storage(ClientSettings * clientSettings);
-  virtual ~Storage();
-private:
 
-};
+using namespace NaiveBayes;
 
+namespace DataStorage {
+
+  typedef struct {
+    SText name;
+    //    std::list<std::string> articles;
+    //    std::list<std::string> relatedVideos;
+    //    std::list<std::string> about;
+  } STrack;
+
+  class Storage {
+  public:
+    Storage();
+    virtual ~Storage();
+
+    void loadNewSong(MPD::Song s);
+
+    SArtist * currentArtist;
+    STrack * currentTrack;
+
+  private:
+    HTTP * http;
+    Json::Value record;
+
+    // private structures
+    std::string filePath;
+
+
+    std::string localStorageDir;
+    std::string remoteStorageURL;
+
+    void clearStorage();
+
+
+    bool fileExists(const char *filename);
+    void loadArtist(const std::string& filename);
+
+    std::string remoteLoadArtist(std::string artist);
+    void remoteSaveArtist(std::string filename);
+
+    std::string createArtistFilePath(std::string artist);
+    std::string createFilePath(std::string artist, std::string title);
+
+  };
+
+  extern Storage storage;
+}
 #endif	/* STORAGE_H */
 

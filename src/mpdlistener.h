@@ -32,7 +32,7 @@ namespace MPD {
   public:
     virtual ~Listener() {}
 
-    virtual void playerEvent() {}
+    virtual void updatePlayer() {}
 
     };
 

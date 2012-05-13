@@ -1,60 +1,57 @@
-/**
- * Copyright (C) 2012 Tomas Wagner <xwagne01@stud.fit.vutbr.cz>
- *
- * This file is part of impc (Intelligent Music Player Client).
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with rrv.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/**
- * @file thread.cpp
- * @author Tomas Wagner (xwagne01@stud.fit.vutbr.cz)
- * @brief Class contains creating and managing thread.
- */
+//    Copyright (C) 2009 Dirk Vanden Boer <dirk.vdb@gmail.com>
+//
+//    This program is free software; you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation; either version 2 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program; if not, write to the Free Software
+//    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "thread.h"
+#include <iostream>
 
 
-Thread::Thread() {
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-}
-
-
-bool Thread::create(void * t(void *)) {
-  if (pthread_create(&pt, &attr, t, NULL) != 0) {
-    std::cerr << "pthread_create() err=" << errno << std::endl;
-    return false;
-  }
-  return true;
-}
-
-
-bool Thread::join() {
-  if (pthread_join(pt, &statp) == -1) {
-    std::cerr << "pthread_join() err=" << errno << std::endl;
-    return false;
-  }
-  return true;
-}
-
-
-void Thread::cancel() {
-  pthread_cancel(pt);
+Thread::Thread(ThreadFunction pfnThreadFunction, void* pInstance)
+: m_pfnThreadFunction(pfnThreadFunction)
+, m_InstancePtrs() {
+  m_InstancePtrs.pThreadInstance = this;
+  m_InstancePtrs.pRunInstance = pInstance;
 }
 
 
 Thread::~Thread() {
 }
 
+
+bool Thread::start() {
+  int ret = pthread_create(&m_Thread, NULL, Thread::onThreadStart, &m_InstancePtrs);
+  if (0 != ret) {
+    std::cerr << "Failed to create thread: " << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+
+void Thread::join() {
+  pthread_join(m_Thread, NULL);
+}
+
+
+void Thread::cancel() {
+  pthread_cancel(m_Thread);
+}
+
+
+void* Thread::onThreadStart(void* data) {
+  InstancePointers* pPtrs = reinterpret_cast<InstancePointers*> (data);
+  return pPtrs->pThreadInstance->m_pfnThreadFunction(pPtrs->pRunInstance);
+}
