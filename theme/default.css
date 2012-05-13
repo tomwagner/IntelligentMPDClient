@@ -1,8 +1,9 @@
-/*GtkWindow {
-  background-color: mix (@entry-color,shade (#fff, 0.5),0.8);
-  background-image: url('../ui/main.png');
-  
-}*/
+GtkWindow {
+ background-color: mix (@entry-color,shade (#fff, 0.5),0.8);
+ background-image: url('../ui/main.png');
+}
+
+
 GtkLabel#songLabel {
   font: Sans Bold;
   font-size: 16;
@@ -13,3 +14,66 @@ GtkLabel#songLabel {
   border-style: solid;
 }*/
 
+
+/*.background {
+  background-color: #ffffff;
+}
+*/
+
+GtkTable {
+    background-color: #898989;
+}
+
+/*GtkBox#slideBox {
+  background-color: #898989;
+}*/
+
+
+GtkLabel#slideText {
+  font: Sans Bold;
+  font-size: 16;
+
+  color: #ffffff;
+}
+
+/*GtkScrolledWindow#articleWindow {
+    background-color: rgba (0.3, 0.3, 0.3, 0.2);
+}*/
+
+GtkTreeView {
+    background-color: rgba (0.0, 0.0, 0.0, 0.0);
+}
+GtkViewport {
+    background-color: rgba (0.0, 0.0, 0.0, 0.0);
+}
+
+GtkNotebook {
+    background-color: rgba (0.0, 0.0, 0.0, 0.0);
+}
+
+GtkEventBox{
+    background-color: rgba (0.0, 0.0, 0.0, 0.0);
+}
+ GtkPaned {
+    background-color: rgba (0.0, 0.0, 0.0, 0.0);
+}
+
+
+.button {
+    border-radius: 0px;
+    border-width: 1px;
+    background-image: -gtk-gradient (linear, left top, left bottom,
+                                     from (shade (@bg_color, 1.3)),
+                                     color-stop (0.55, shade (@bg_color, 1.1)),
+                                     color-stop (0.55, shade (@bg_color, 0.9)),
+                                     to (@bg_color));
+}
+
+GtkButton:hover {
+    background-image: -gtk-gradient (linear, left top, left bottom,
+                                     from (shade (@selected_bg_color, 1.3)),
+                                     color-stop (0.5, shade (@selected_bg_color, 1.1)),
+                                     color-stop (0.5, shade (@selected_bg_color, 0.7)),
+                                     to (@selected_bg_color));
+    transition: 200ms ease-in-out;
+}
