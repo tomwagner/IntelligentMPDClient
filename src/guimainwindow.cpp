@@ -256,7 +256,7 @@ namespace GUI {
     //    windowContext->line_to(100, 100);
     //    windowContext->stroke();
     //    mainWindow->show_all_children(true);
-    GDK_EVENT_STOP;
+    //    GDK_EVENT_STOP;
     return false;
   }
 
