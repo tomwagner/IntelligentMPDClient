@@ -1,9 +1,9 @@
 {
    "settings" : {
-      "confPath" : "/home/thomas/SCHOOL_MSK/DIP/app/IntelligentMPDClient/config",
+      "confPath" : "/home/thomas/SCHOOL_MSK/DIP/app/IntelligentMPDClient/config/",
       "host" : "localhost",
-      "password" : "heslos",
+      "password" : "",
       "port" : 6600,
-      "tempPath" : "/home/thomas/SCHOOL_MSK/DIP/app/IntelligentMPDClient/tmp"
+      "tempPath" : "/home/thomas/SCHOOL_MSK/DIP/app/IntelligentMPDClient/tmp/"
    }
 }

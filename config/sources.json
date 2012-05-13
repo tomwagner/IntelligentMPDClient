@@ -1,20 +1,96 @@
 {
    "sources" : [
       {
+         "active" : true,
+         "url" : "http://www.soundunwound.com"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.amazon.com"
+      },
+      {
+         "active" : false,
+         "url" : "http://umdmusic.com"
+      },
+      {
          "active" : false,
          "url" : "http://www.allmusic.com"
       },
       {
-         "active" : true,
-         "url" : "http://www.bandzone.cz"
+         "active" : false,
+         "url" : "http://www.supersvet.cz"
       },
       {
-         "active" : true,
+         "active" : false,
+         "url" : "http://www.discogs.com"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.idnes.cz"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.hudebniskupiny.cz"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.google.cz"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.seo-wagner.cz"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.seo-wagner.cz/"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.seo-wagner.cz/registrace-do-katalogu/"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.vymena-odkazu.cz"
+      },
+      {
+         "active" : false,
+         "url" : "http://en.wikipedia.org"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.bonjovi.cz"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.google.com"
+      },
+      {
+         "active" : false,
          "url" : "http://www.last.fm"
       },
       {
          "active" : false,
-         "url" : "http://www.musicbraniz.com"
+         "url" : "http://www.oblibeny.cz/mp3/"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.musicbrainz.org"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.htbackdrops.com"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.bandzone.cz"
+      },
+      {
+         "active" : false,
+         "url" : "http://www.abradio.cz"
+      },
+      {
+         "active" : false,
+         "url" : "http://musicserver.cz"
       }
    ]
 }
