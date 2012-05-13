@@ -1,0 +1,46 @@
+<xsl:stylesheet version="1.0"
+ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+ <xsl:output omit-xml-declaration="yes" indent="yes"/>
+ <xsl:strip-space elements="*"/>
+
+ <xsl:template match="node()|@*">
+  <xsl:copy>
+   <xsl:apply-templates select="node()|@*"/>
+  </xsl:copy>
+ </xsl:template>
+
+ <xsl:template match="script"/>
+ <xsl:template match="comment()"/>
+ <xsl:template match="li"/>
+ <xsl:template match="ul"/>
+ <xsl:template match="img"/>
+ <xsl:template match="table"/>
+ <xsl:template match="dt"/>
+ <xsl:template match="dd"/>
+ <xsl:template match="header"/>
+ <xsl:template match="sup"/>
+ <xsl:template match="sub"/>
+  <xsl:template match="cufon"/>
+ 
+<xsl:template match="b">
+  <xsl:value-of select="."/>
+ </xsl:template>
+ 
+<xsl:template match="i">
+  <xsl:value-of select="."/>
+ </xsl:template>
+ 
+<xsl:template match="strong">
+  <xsl:value-of select="."/>
+ </xsl:template>
+ 
+ <xsl:template match="span">
+   <xsl:value-of select="."/>
+ </xsl:template>
+ 
+ <xsl:template match="a">
+  <xsl:value-of select="."/>
+ </xsl:template>
+ 
+
+</xsl:stylesheet>
