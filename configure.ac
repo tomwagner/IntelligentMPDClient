@@ -32,7 +32,7 @@ PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.0]) #2.7.8
 PKG_CHECK_MODULES([gtkmm30], [gtkmm-3.0 >= 3.0]) #3.3.18
 PKG_CHECK_MODULES([gdkmm30], [gdkmm-3.0 >= 3.0]) #3.3.18
 PKG_CHECK_MODULES([jsoncpp], [jsoncpp >= 0.5])
-PKG_CHECK_MODULES([imagemagick], [Magick++])
+#PKG_CHECK_MODULES([imagemagick], [Magick++])
 
 # Localization
 IT_PROG_INTLTOOL([0.35.0])
@@ -54,10 +54,10 @@ AC_SUBST(IMPC_LOCALEDIR)
 #DOXYGEN
 
 #LIBTOOL
-LT_INIT
-LT_LANG([C++])
-AC_ENABLE_SHARED
-AC_DISABLE_STATIC
+#LT_INIT
+#LT_LANG([C++])
+#AC_ENABLE_SHARED
+#AC_DISABLE_STATIC
 
 
 AC_CONFIG_FILES([Makefile po/Makefile.in])

@@ -24,7 +24,6 @@ src/agent.h src/storage.h \
 src/clientsettings.h \
 src/guicoverwidget.h \
 src/guiartistswidget.h \
-src/guitextwidget.h \
 src/guisettings.h \
 src/guisources.h \
 src/http.h \
@@ -66,7 +65,6 @@ src/storage.cpp \
 src/clientsettings.cpp \
 src/guicoverwidget.cpp \
 src/guiartistswidget.cpp \
-src/guitextwidget.cpp \
 src/guisettings.cpp \
 src/guisources.cpp \
 src/http.cpp \
