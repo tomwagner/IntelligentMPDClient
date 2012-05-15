@@ -28,8 +28,9 @@
 #include <gtkmm.h>
 #include <cairomm/cairomm.h>
 #include <list>
-#include "sslide.h"
+#include "sartist.h"
 #include "utils.h"
+
 
 
 using namespace DataStorage;
@@ -41,7 +42,7 @@ namespace GUI {
     SlideshowWidget(Glib::RefPtr<Gtk::Builder>& builder);
     virtual ~SlideshowWidget();
 
-    void setSlideshowWidget(std::map<std::string, SSlide *>* list);
+    void setSlideshowWidget(SArtist* currentArtist);
     void updateSlideshowWidget();
 
     void hide();
@@ -54,6 +55,7 @@ namespace GUI {
 
 
   private:
+    SArtist * currentArtist;
     bool slideshowStarted;
     std::string loadingIcon;
 
@@ -77,8 +79,8 @@ namespace GUI {
     Gtk::Label * slideSourceName;
     Gtk::Label * slideSourceUrl;
     Gtk::ToggleButton * slideSlideshow;
-    Gtk::Image * playImageSmall;
-    Gtk::Image * pauseImageSmall;
+    Gtk::Image * slideSlideshowPlay;
+    Gtk::Image * slideshowIconPause;
     Gtk::Button * slideNext;
     Gtk::Button * slidePrev;
 

@@ -21,6 +21,7 @@
  * @file bayesclassificator.h
  * @author Tomas Wagner (xwagne01@stud.fit.vutbr.cz)
  * @brief Bayesian Clasificator
+ * @original sources from http://nbayes.codeplex.com/ (C#)
  */
 #ifndef CLASSIFICATION_H
 #define	CLASSIFICATION_H

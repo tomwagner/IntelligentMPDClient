@@ -30,7 +30,8 @@ namespace DataStorage {
 
   SArtist::SArtist() : m_classificator(new NaiveBayes::Classificator),
   m_right(new NaiveBayes::Index),
-  m_wrong(new NaiveBayes::Index) {
+  m_wrong(new NaiveBayes::Index),
+  m_synced(false) {
   }
 
 
@@ -45,6 +46,8 @@ namespace DataStorage {
 
 
   void SArtist::clear() {
+    // reset synced
+    m_synced = false;
 
     // clear articles
     std::map<std::string, SArticle*>::iterator a;
@@ -109,7 +112,7 @@ namespace DataStorage {
 
     // if file doesnt exist, we create new empty 
     if (!in.is_open()) {
-      std::cout << "Storage: Error in loading file" << std::endl;
+      std::cout << "Storage: Local Artist File not found" << std::endl;
       return;
     }
     while (std::getline(in, line))
@@ -118,7 +121,6 @@ namespace DataStorage {
     in.close();
 
     loadArtistFromContent(content);
-
   }
 
 
@@ -142,7 +144,6 @@ namespace DataStorage {
 
     // load articles
     if (artist.isMember("articles")) {
-      //      std::cout << "articles nalezeno" << std::endl;
 
       const Json::Value articles = artist["articles"];
 
@@ -199,13 +200,9 @@ namespace DataStorage {
         }
       }
     }
-    
-    std::cout << "po load" << albums.size() << std::endl;
-
 
     // load images
     if (artist.isMember("images")) {
-      //      std::cout << "images nalezeno" << std::endl;
 
       const Json::Value images = artist["images"];
 
@@ -247,6 +244,16 @@ namespace DataStorage {
   }
 
 
+  void SArtist::addAsRight(std::string& s) {
+    m_right->add(s);
+  }
+
+
+  void SArtist::addAsWrong(std::string& s) {
+    m_wrong->add(s);
+  }
+
+
   void SArtist::classificateArtist() {
     // classificate articles
     std::map<std::string, SArticle *>::iterator it;
@@ -259,23 +266,6 @@ namespace DataStorage {
     std::map<std::string, SSlide *>::iterator itI;
     for (itI = images.begin(); itI != images.end(); itI++) {
       (*itI).second->objectclass = classificate((*itI).second->img->title + " " + (*itI).second->img->alt + " " + (*itI).second->img->context);
-
-      //      std::cout << "text" << (*itI).second->img->context << std::endl<< std::endl;
-      //
-      //      switch ((*it).second->objectclass) {
-      //        case NaiveBayes::firstClass:
-      //          std::cout << "First Class" << std::endl;
-      //          break;
-      //        case NaiveBayes::secondClass:
-      //          std::cout << "Second Class" << std::endl;
-      //          break;
-      //        case NaiveBayes::unknownClass:
-      //          std::cout << "Unknown Class" << std::endl;
-      //          break;
-      //        default:
-      //          std::cout << "ERR Classification" << std::endl;
-      //          break;
-      //      }
     }
   }
 
@@ -317,6 +307,9 @@ namespace DataStorage {
     // save articles
     std::map<std::string, SArticle *>::iterator it;
     for (it = articles.begin(); it != articles.end(); it++) {
+      // set sychnronized flag
+      if (isSynced())
+        (*it).second->setSynced(m_synced);
       artist["articles"].append((*it).second->getArticle());
     }
 
@@ -325,6 +318,9 @@ namespace DataStorage {
     std::map<std::string, SAlbum*>::iterator itB;
     for (itA = albums.begin(); itA != albums.end(); itA++) {
       for (itB = (*itA).second->begin(); itB != (*itA).second->end(); itB++) {
+        // set sychnronized flag
+        if (isSynced())
+          (*itB).second->setSynced(m_synced);
         artist["albums"][(*itB).second->name->getHash()].append((*itB).second->getAlbum());
       }
     }
@@ -332,6 +328,8 @@ namespace DataStorage {
     // save images
     std::map<std::string, SSlide *>::iterator itI;
     for (itI = images.begin(); itI != images.end(); itI++) {
+      if (isSynced())
+          (*itI).second->setSynced(m_synced);
       artist["images"].append((*itI).second->getSlide());
     }
 
@@ -348,6 +346,7 @@ namespace DataStorage {
 
     // write
     of << root.toStyledString();
+    of.close();
   }
 
 
@@ -364,14 +363,14 @@ namespace DataStorage {
   void SArtist::saveAlbum(SAlbum * album) {
     std::map<std::string, std::map<std::string, SAlbum*>* >::iterator it;
     it = albums.find(album->name->getHash());
-    
+
     if (it != albums.end()) {
       (*it).second->insert(std::pair<std::string, SAlbum *>(album->img->getHash(), album));
     } else {
       std::map<std::string, SAlbum *>* m = new std::map<std::string, SAlbum *>;
       m->insert(std::pair<std::string, SAlbum *>(album->img->getHash(), album));
       albums.insert(std::pair<std::string, std::map<std::string, SAlbum*>* >(album->name->getHash(), m));
-      
+
     }
   }
 
@@ -405,6 +404,11 @@ namespace DataStorage {
         map->insert(std::pair<std::string, AgentUrl > (loadMap["key"].asString(), u));
       }
     }
+  }
+
+
+  void SArtist::setSynced(bool sync) {
+    m_synced = sync;
   }
 }
 

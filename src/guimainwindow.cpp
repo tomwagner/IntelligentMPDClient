@@ -99,7 +99,7 @@ namespace GUI {
     builder->get_widget("aboutDialog", aboutDialog);
 
     aboutDialog->set_program_name("Intelligent MPD Client");
-    aboutDialog->set_version("0.1");
+    aboutDialog->set_version("0.2");
     aboutDialog->set_website("http://www.impc.cz");
     std::vector<Glib::ustring> authors;
     authors.push_back("Tomas Wagner - xwagne01@stud.fit.vutbr.cz");

@@ -21,6 +21,7 @@
  * @file bayesindex.cpp
  * @author Tomas Wagner (xwagne01@stud.fit.vutbr.cz)
  * @brief Indexing storage for bayesian classificator.
+ * @original sources from http://nbayes.codeplex.com/ (C#)
  */
 
 #include "bayesindex.h"

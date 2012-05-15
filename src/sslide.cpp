@@ -46,6 +46,7 @@ namespace DataStorage {
     slide["alt"] = img->alt;
     slide["context"] = img->context;
     slide["url"] = img->getUrl()->getText();
+    slide["hash"] = img->getHash();
 
 
     slide["right"] = getNumOfRight();

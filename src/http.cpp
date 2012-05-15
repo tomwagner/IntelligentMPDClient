@@ -124,7 +124,6 @@ namespace utils {
     // wait for timeout
     wait();
 
-
     // error detection
     CURLcode result;
 
@@ -157,18 +156,10 @@ namespace utils {
 #endif    
           redirect.assign(ct);
         }
-
-        //        result = curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &ct);
-        //        if ((CURLE_OK == result) && ct) {
-        //#if DEBUG
-        //          printf("HTTP: Content length: %s\n", ct);
-        //#endif    
-        //          //redirect.assign(ct);
-        //        }
       }
 
 #if DEBUGDOWNLOADED
-      std::cout << "HTML DOWNLOADED:" << buffer << std::endl;
+      std::cout << "DOWNLOADED:" << buffer << std::endl;
 #endif 
       // exception on error
       if (result != CURLE_OK) {
@@ -271,15 +262,18 @@ namespace utils {
     // error detection
     CURLcode result;
 
+    //open connection
+    CURL * curlPost = curl_easy_init();
+
     struct curl_httppost *post = NULL;
     struct curl_httppost *last = NULL;
 
-    if (curl) {
+    if (curlPost) {
       curl_formadd(&post, &last, CURLFORM_COPYNAME, "file", CURLFORM_FILE, filePath.c_str(), CURLFORM_END);
       //Specify the API Endpoint
-      curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+      curl_easy_setopt(curlPost, CURLOPT_URL, url.c_str());
       //Specify the HTTP Method
-      result = curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+      result = curl_easy_setopt(curlPost, CURLOPT_HTTPPOST, post);
 
       //      curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer);
       //      curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -290,19 +284,21 @@ namespace utils {
       //      1 -> follow redirect with the same type of request only for 301 redirects.
       //      2 -> follow redirect with the same type of request only for 302 redirects.
       //      3 -> follow redirect with the same type of request both for 301 and 302 redirects.*/
-//            curl_easy_setopt(curl, CURLOPT_POSTREDIR, 3);
+      //            curl_easy_setopt(curl, CURLOPT_POSTREDIR, 3);
       //
-      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeText);
-      curl_easy_setopt(curl, CURLOPT_WRITEDATA, &output);
-//      curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+      curl_easy_setopt(curlPost, CURLOPT_WRITEFUNCTION, &writeText);
+      curl_easy_setopt(curlPost, CURLOPT_WRITEDATA, &output);
+      //      curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 
       // send request
-      result = curl_easy_perform(curl);
+      result = curl_easy_perform(curlPost);
 
+      // clean      
+      curl_easy_cleanup(curlPost);
 
       // exception on request error
       if (result != CURLE_OK) {
-        InputException e("HTTP POST: Curl Error: " + std::string(errorBuffer));
+        InputException e("HTTP POST File: Curl Error: " + std::string(errorBuffer));
         throw e;
       }
     }

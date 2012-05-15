@@ -41,7 +41,7 @@ namespace GUI {
     ArticlesWidget(Glib::RefPtr<Gtk::Builder>& builder);
     virtual ~ArticlesWidget();
 
-    void setArticlesWidget(std::map<std::string, SArticle *>* list);
+    void setArticlesWidget(SArtist * currentArtist);
     void updateArticlesWidget();
     void hide();
     void show();
@@ -49,14 +49,17 @@ namespace GUI {
     void clearArticlesWidget();
 
   private:
+    SArtist * currentArtist;
     int currentPosition;
+    bool slideshowStarted;
     void showArticle(SArticle *);
 
     void removeMarkup(std::string &s);
-    
+
     std::map<std::string, SArticle *>* articlesList;
     std::map<std::string, SArticle *>::iterator it;
   protected:
+    sigc::connection updateTimeout;
     Gtk::Label * articleTab;
     Gtk::Box * articlesWidget;
     Gtk::ScrolledWindow * articleWindow;
@@ -66,12 +69,21 @@ namespace GUI {
     Gtk::Label * articleSourceName;
     Gtk::Label * articleSourceUrl;
 
+
     // slideshow
+    Gtk::ToggleButton * articleSlideshow;
+    Gtk::Image * articleSlideshowPlay;
+    Gtk::Image * slideshowIconPause;
     Gtk::Button * articleNext;
     Gtk::Button * articlePrev;
 
+    void on_slideshowStart();
     void on_next();
     void on_prev();
+
+    void run();
+    void stop();
+    bool slideLeft();
 
     // feedback
     Gtk::Button * articleRight;
@@ -80,7 +92,7 @@ namespace GUI {
     void rightFeedback();
     void wrongFeedback();
     void checkIfICanVote();
-    
+
     // classification
     Gtk::Image * articleClass;
     void checkClassOfObject(SArticle * s);

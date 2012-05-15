@@ -47,13 +47,17 @@ namespace DataStorage {
     SArtist();
     virtual ~SArtist();
 
+    void setSynced(bool);
+    bool isSynced(){return m_synced;}
+    
     void loadArtistFromContent(std::string& content);
     void loadArtistFromFile(const std::string& filePath);
     void saveArtist(std::string& filePath);
     void clear();
 
     void setArtist(std::string name);
-    void setAlbum(std::string name){
+
+    void setAlbum(std::string name) {
       album.set(name);
     };
     void setTrack(std::string name);
@@ -68,6 +72,10 @@ namespace DataStorage {
     ClassificatorResult classificate(std::string s);
     ClassificatorResult classificate(Index * item);
 
+    void addAsRight(std::string& s);
+    void addAsWrong(std::string& s);
+    void classificateArtist();
+
     SText name;
     SText album;
     SText webpage;
@@ -75,16 +83,17 @@ namespace DataStorage {
     // pair <hash, article>
     std::map<std::string, SSlide*> images;
     std::map<std::string, SArticle *> articles;
-//    std::map<std::string, SAlbum*> albums;
+    //    std::map<std::string, SAlbum*> albums;
     std::map<std::string, std::map<std::string, SAlbum*>* > albums;
   private:
     NaiveBayes::Classificator * m_classificator;
     NaiveBayes::Index * m_right;
     NaiveBayes::Index * m_wrong;
+    bool m_synced;
 
     Json::Value maps;
 
-    void classificateArtist();
+
   };
 }
 #endif	/* SARTIST_H */

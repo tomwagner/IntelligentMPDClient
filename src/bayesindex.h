@@ -21,6 +21,7 @@
  * @file bayesindex.h
  * @author Tomas Wagner (xwagne01@stud.fit.vutbr.cz)
  * @brief 
+ * @original sources from http://nbayes.codeplex.com/ (C#)
  */
 #ifndef BAYESINDEX_H
 #define	BAYESINDEX_H
@@ -49,7 +50,7 @@ namespace NaiveBayes {
     inline std::map<std::string, int> * get() const {
       return m_wordCountMap;
     }
-    
+
     void clear();
 
   private:

@@ -888,7 +888,7 @@ audio-volume-medium</property>
                       <object class="GtkImage" id="coverClass">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="stock">gtk-ok</property>
+                        <property name="stock">gtk-help</property>
                         <property name="icon-size">2</property>
                       </object>
                       <packing>
@@ -1730,7 +1730,7 @@ audio-volume-medium</property>
                                         <property name="receives_default">True</property>
                                         <property name="use_action_appearance">False</property>
                                         <child>
-                                          <object class="GtkImage" id="image8">
+                                          <object class="GtkImage" id="articleSlideshowPlay">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="stock">gtk-media-play</property>
@@ -2068,7 +2068,7 @@ audio-volume-medium</property>
                                         <property name="receives_default">True</property>
                                         <property name="use_action_appearance">False</property>
                                         <child>
-                                          <object class="GtkImage" id="playImageSmall">
+                                          <object class="GtkImage" id="slideSlideshowPlay">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="stock">gtk-media-play</property>

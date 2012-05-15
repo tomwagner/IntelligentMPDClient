@@ -58,15 +58,18 @@ namespace DataStorage {
   }
 
 
+
+
   void SText::calculateHash() {
     m_hash = hashWrapper->getHashFromString(m_text);
   }
 
 
-//  std::string SText::toLower(std::string& text) {
-//    std::transform(text.begin(), text.end(), text.begin(), ::tolower);
-//  }
-//
+  //  std::string SText::toLower(std::string& text) {
+  //    std::transform(text.begin(), text.end(), text.begin(), ::tolower);
+  //  }
+  //
+
 
   SText& SText::toLower() {
     std::string lower;

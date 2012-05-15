@@ -75,10 +75,6 @@ IntelligentClient::IntelligentClient(int argc, char** argv) {
 
   clientMPD.SetStatusUpdater(updatePlayer, 0);
 
-  //  Glib::signal_timeout().connect(
-  //          sigc::mem_fun(*this, &IntelligentClient::updateStatus), 1000);
-
-
   // init agent manager
   try {
     if (argc >= 2)
@@ -89,8 +85,6 @@ IntelligentClient::IntelligentClient(int argc, char** argv) {
   } catch (InputException &e) {
     std::cerr << "Input exception:" << e.what() << std::endl;
   }
-  // nainicializujeme widgety GUI
-
 
   // check if we are connected
   if (clientMPD.Connected()) {

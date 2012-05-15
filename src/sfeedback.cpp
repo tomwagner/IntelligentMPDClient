@@ -55,9 +55,12 @@ namespace DataStorage {
   bool SFeedback::isSynced() {
     return m_synced;
   }
-  
-  void SFeedback::setSynced(bool s){
-    m_synced = s;
+
+
+  void SFeedback::setSynced(bool s) {
+    if (m_voted) {
+      m_synced = s;
+    }
   }
 
 

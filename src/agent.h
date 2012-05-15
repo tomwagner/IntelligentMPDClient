@@ -43,13 +43,6 @@
 typedef struct {
   std::string protocol_, host_, domain_, dirpath_, path_, query_;
 } parsedUrl;
-//
-//typedef struct {
-//  bool visited;
-//  std::string url;
-//  double relevance;
-//  std::time_t time;
-//} AgentUrl;
 
 class Agent {
 public:
@@ -121,7 +114,9 @@ private:
   std::string absoluteUrl(std::string url);
   parsedUrl parseUrl(const std::string& url_s);
   std::string getDomain(const std::string& url);
-};
+
+  bool checkAcceptedDomain(std::string url);
+  };
 
 #endif	/* AGENT_H */
 

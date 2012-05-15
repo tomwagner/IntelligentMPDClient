@@ -38,8 +38,7 @@ public:
 private:
   bool updateStatus();
   Storage * clientStorage;
-
-
+  
 };
   extern AgentManager * agentManager;
 

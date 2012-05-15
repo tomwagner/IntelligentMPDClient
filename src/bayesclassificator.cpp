@@ -21,6 +21,7 @@
  * @file bayesclassificator.cpp
  * @author Tomas Wagner (xwagne01@stud.fit.vutbr.cz)
  * @brief 
+ * @original sources from http://nbayes.codeplex.com/ (C#)
  */
 #include "bayesclassificator.h"
 

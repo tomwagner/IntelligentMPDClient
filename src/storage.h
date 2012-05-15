@@ -73,7 +73,7 @@ namespace DataStorage {
     void loadArtist(const std::string& filename);
 
     std::string remoteLoadArtist(std::string artist);
-    void remoteSaveArtist(std::string filename);
+    bool remoteSaveArtist(std::string filename);
 
     std::string createArtistFilePath(std::string artist);
     std::string createFilePath(std::string artist, std::string title);

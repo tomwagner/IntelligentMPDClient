@@ -34,6 +34,8 @@ using namespace DataStorage;
 
 namespace GUI {
 
+  const int articleSlideshowTimeout = 3000;
+
 
   ArticlesWidget::ArticlesWidget(Glib::RefPtr<Gtk::Builder>& builder) :
   currentPosition(0),
@@ -47,11 +49,17 @@ namespace GUI {
     builder->get_widget("articleSourceName", articleSourceName);
     builder->get_widget("articleSourceUrl", articleSourceUrl);
 
+
     // slideshow
+    slideshowIconPause = new Gtk::Image;
+    slideshowIconPause->set_from_icon_name("gtk-media-pause", Gtk::ICON_SIZE_SMALL_TOOLBAR);
+    builder->get_widget("articleSlideshow", articleSlideshow);
+    builder->get_widget("articleSlideshowPlay", articleSlideshowPlay);
     builder->get_widget("articleNext", articleNext);
     articleNext->set_name("articleNext");
     builder->get_widget("articlePrev", articlePrev);
 
+    articleSlideshow->signal_clicked().connect(sigc::mem_fun(*this, &ArticlesWidget::on_slideshowStart));
     articleNext->signal_clicked().connect(sigc::mem_fun(*this, &ArticlesWidget::on_next));
     articlePrev->signal_clicked().connect(sigc::mem_fun(*this, &ArticlesWidget::on_prev));
 
@@ -68,6 +76,7 @@ namespace GUI {
 
 
   ArticlesWidget::~ArticlesWidget() {
+    delete slideshowIconPause;
   }
 
 
@@ -112,8 +121,9 @@ namespace GUI {
   }
 
 
-  void ArticlesWidget::setArticlesWidget(std::map<std::string, SArticle *>* list) {
-    articlesList = list;
+  void ArticlesWidget::setArticlesWidget(SArtist * artist) {
+    currentArtist = artist;
+    articlesList = &currentArtist->articles;
     it = articlesList->begin();
 
     checkIfICanVote();
@@ -127,7 +137,7 @@ namespace GUI {
 
   void ArticlesWidget::clearArticlesWidget() {
     articleTab->set_label("Articles");
-    
+
     articleTitle->set_label("");
     articleAbout->set_label("");
 
@@ -158,6 +168,44 @@ namespace GUI {
 
   void ArticlesWidget::show() {
     articlesWidget->show();
+  }
+
+
+  void ArticlesWidget::run() {
+    if (!slideshowStarted) {
+      slideshowStarted = true;
+      // plan cyclic update
+      updateTimeout = Glib::signal_timeout().connect(
+              sigc::mem_fun(*this, &ArticlesWidget::slideLeft), articleSlideshowTimeout);
+    }
+  }
+
+
+  bool ArticlesWidget::slideLeft() {
+    if (slideshowStarted) {
+      on_next();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  void ArticlesWidget::stop() {
+    if (slideshowStarted) {
+      slideshowStarted = false;
+    }
+  }
+
+
+  void ArticlesWidget::on_slideshowStart() {
+    if (articleSlideshow->get_active()) {
+      run();
+      articleSlideshow->set_image(*slideshowIconPause);
+    } else {
+      stop();
+      articleSlideshow->set_image(*articleSlideshowPlay);
+    }
   }
 
 
@@ -193,6 +241,16 @@ namespace GUI {
 
     if (!it->second->canIVote()) return;
     it->second->voteRight();
+
+    // set current slide as right
+    std::string text = it->second->text->getText();
+    currentArtist->addAsRight(text);
+    std::string title = it->second->title->getText();
+    currentArtist->addAsRight(title);
+
+    // reclassificate all data
+    currentArtist->classificateArtist();
+
     checkIfICanVote();
     checkClassOfObject(it->second);
   }
@@ -203,6 +261,16 @@ namespace GUI {
 
     if (!it->second->canIVote()) return;
     it->second->voteWrong();
+
+    // set current slide as right
+    std::string text = it->second->text->getText();
+    currentArtist->addAsWrong(text);
+    std::string title = it->second->title->getText();
+    currentArtist->addAsWrong(title);
+
+    // reclassificate all data
+    currentArtist->classificateArtist();
+
     checkIfICanVote();
     checkClassOfObject(it->second);
   }

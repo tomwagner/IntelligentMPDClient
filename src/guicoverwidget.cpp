@@ -37,8 +37,7 @@ namespace GUI {
   CoverWidget::CoverWidget(Glib::RefPtr<Gtk::Builder>& builder) :
   currentPosition(0),
   it(NULL),
-  coverList(NULL),
-  loadingIcon("ui/loader.gif") {
+  coverList(NULL) {
     builder->get_widget("coverEventBox", coverEventBox);
     builder->get_widget("albumCover", cover);
     coverWidth = 200;
@@ -135,9 +134,7 @@ namespace GUI {
 
 
   void CoverWidget::showLoading() {
-    if (Glib::file_test(loadingIcon.c_str(), Glib::FILE_TEST_EXISTS))
-      //      cover->set(Gdk::PixbufAnimation::create_from_file(loadingIcon.c_str()));
-      cover->set_from_icon_name("gtk-no", Gtk::ICON_SIZE_LARGE_TOOLBAR);
+      cover->set_from_icon_name("gtk-no", Gtk::ICON_SIZE_DIALOG);
   }
 
 
@@ -177,7 +174,6 @@ namespace GUI {
     currentPosition++;
 
     if (it == coverList->end()) it = coverList->begin();
-    std::cout << "next" << it->second->context << std::endl;
     showCover(it->second);
   }
 

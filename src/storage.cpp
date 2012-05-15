@@ -29,6 +29,7 @@
 #include <cassert>
 #include "guimainwindow.h"
 
+#define DEBUG 0
 
 
 namespace DataStorage {
@@ -37,10 +38,11 @@ namespace DataStorage {
 
 
   Storage::Storage() : filePath(""), http(new HTTP) {
-
+#if DEBUG
     std::cout << "storage vytvořen" << std::endl;
+#endif
 
-    localStorageDir = "tmp/"; //clientSettings->getTempPath();
+    localStorageDir = "tmp/";
     remoteStorageURL = "http://www.impc.cz/api/";
 
     currentArtist = new SArtist;
@@ -49,9 +51,22 @@ namespace DataStorage {
 
 
   Storage::~Storage() {
+#if DEBUG
     std::cout << "storage destruktor" << std::endl;
-
+#endif
     // save current file
+    currentArtist->saveArtist(filePath);
+
+
+    // save to shared storage
+    if (remoteSaveArtist(filePath)) {
+      currentArtist->setSynced(true);
+    } else {
+      currentArtist->setSynced(false);
+    }
+    
+    
+    // save with sync flags
     currentArtist->saveArtist(filePath);
 
     delete currentTrack;
@@ -61,8 +76,22 @@ namespace DataStorage {
 
 
   void Storage::loadNewSong(MPD::Song s) {
+
     // save current file
     currentArtist->saveArtist(filePath);
+
+
+    // save to shared storage
+    if (remoteSaveArtist(filePath)) {
+      currentArtist->setSynced(true);
+    } else {
+      currentArtist->setSynced(false);
+    }
+    
+    
+    // save with sync flags
+    currentArtist->saveArtist(filePath);
+
 
     // clear current Artist
     currentArtist->clear();
@@ -84,27 +113,21 @@ namespace DataStorage {
 
 
     // set pointers to GUI
-    gui->articlesWidget->setArticlesWidget(&currentArtist->articles);
-    gui->slideshowWidget->setSlideshowWidget(&currentArtist->images);
+    gui->articlesWidget->setArticlesWidget(currentArtist);
+    gui->slideshowWidget->setSlideshowWidget(currentArtist);
 
     std::map<std::string, std::map<std::string, SAlbum*>* >::iterator it;
-    std::cout << "album: " << currentArtist->album.getText() << std::endl;
-    std::cout << "hash: " << currentArtist->album.getHash() << std::endl;
 
-//    if (!currentArtist->album.getText().empty()) {
-      it = currentArtist->albums.find(currentArtist->album.getHash());
-      if (it != currentArtist->albums.end()) {
-        std::cout << "storage currentAlbum" << (*it).second->size() << std::endl;
-        gui->coverWidget->setCoverWidget((*it).second);
-      } else {
-        std::cout << "storage currentAlbum not found" << std::endl;
-        // current album not found, create new map for album images
-        std::map<std::string, SAlbum *>* m = new std::map<std::string, SAlbum *>;
-        currentArtist->albums.insert(std::pair<std::string, std::map<std::string, SAlbum*>* >(currentArtist->album.getHash(), m));
-        gui->coverWidget->setCoverWidget(&*m);
-      }
+    it = currentArtist->albums.find(currentArtist->album.getHash());
+    if (it != currentArtist->albums.end()) {
+      gui->coverWidget->setCoverWidget((*it).second);
+    } else {
+      // current album not found, create new map for album images
+      std::map<std::string, SAlbum *>* m = new std::map<std::string, SAlbum *>;
+      currentArtist->albums.insert(std::pair<std::string, std::map<std::string, SAlbum*>* >(currentArtist->album.getHash(), m));
+      gui->coverWidget->setCoverWidget(&*m);
     }
-//  }
+  }
 
 
   /**
@@ -123,8 +146,6 @@ namespace DataStorage {
     std::replace(title.begin(), title.end(), ' ', '-');
 
     filename = artist + "-" + title + ".json";
-    std::cout << filename << std::endl;
-
 
     return (localStorageDir + filename);
   }
@@ -138,8 +159,6 @@ namespace DataStorage {
     std::replace(artist.begin(), artist.end(), '/', '-');
 
     filename = artist + ".json";
-    std::cout << filename << std::endl;
-
 
     return (localStorageDir + filename);
   }
@@ -151,21 +170,31 @@ namespace DataStorage {
   }
 
 
-  void Storage::remoteSaveArtist(std::string filename) {
+  bool Storage::remoteSaveArtist(std::string filepath) {
     std::string output;
+    if (filepath.empty()) return false;
 
-    http->POSTFile(remoteStorageURL + "?action=upload", filename, output);
-    std::cout << "saved result:" << output << std::endl;
+    try {
+      http->POSTFile(remoteStorageURL + "?action=upload", filepath, output);
+    } catch (InputException &e) {
+      std::cerr << "Input exception:" << e.what() << std::endl;
+      return false;
+    }
+    return true;
   }
 
 
   std::string Storage::remoteLoadArtist(std::string artist) {
     std::string output;
+    try {
+      http->GET((remoteStorageURL + "?action=search&artist=" + HTTP::escape(utils::toLower(artist))), output);
 
-    http->GET(remoteStorageURL + "?action=search&artist=" + utils::toLower(artist), output);
-
+    } catch (InputException &e) {
+      std::cerr << "Input exception:" << e.what() << std::endl;
+    }
+#if DEBUG
     std::cout << "loaded result:" << output << std::endl;
-
+#endif
     return output;
   }
 }

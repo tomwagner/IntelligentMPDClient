@@ -55,7 +55,6 @@ namespace GUI {
     int currentPosition;
 
     bool slideshowStarted;
-    std::string loadingIcon;
 
     int coverWidth;
     int coverHeight;

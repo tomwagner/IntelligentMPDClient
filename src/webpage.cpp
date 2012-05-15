@@ -1193,15 +1193,16 @@ void Webpage::parseLinkList() {
       std::string linkText;
 
       // zabředneme do potomků a hledáme text ohraničený odkazem
-      findDeepText(screenNodes->nodeTab[j]->parent, linkText);
+      findDeepTextWithSeparators(screenNodes->nodeTab[j]->parent, linkText);
 
-      // ořežeme bílé znaky ze začátku a konce
+      // remove white spaces
+      linkText = utils::removeMultipleWhiteSpaces(linkText);
+      
+      // trim
       linkText = utils::trim(linkText);
 
       // pokud nenalezneme text, užijeme text z titulků a altů obrázků
       if (linkText.empty()) {
-
-
         findLinkTextFromImgTitles(screenNodes->nodeTab[j]->parent, linkText);
       }
 

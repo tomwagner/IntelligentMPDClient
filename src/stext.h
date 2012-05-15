@@ -48,17 +48,16 @@ namespace DataStorage {
 
     inline std::string getHash() const {
       return m_hash;
-    };
+    }
 
     inline std::string getText() const {
       return m_text;
-    };
+    }
 
     std::string getTextWithoutHtml();
     std::map<std::string, int> getWordsCountMap();
     int distance(const std::string target);
 
-    //    std::string SText::toLower(std::string& text);
     SText& toLower();
     void trim();
   protected:
@@ -68,7 +67,6 @@ namespace DataStorage {
   private:
     hashwrapper * hashWrapper;
     void calculateHash();
-
 
     std::map<std::string, int> wordCountMap;
 
