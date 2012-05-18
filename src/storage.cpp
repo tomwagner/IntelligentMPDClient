@@ -43,8 +43,7 @@ namespace DataStorage {
 #endif
 
     localStorageDir = Config::GetInstance()->getTempPath();
-    //    remoteStorageURL = "http://www.impc.cz/api/";
-    remoteStorageURL = "http://dip.seo-wagner.cz";
+        remoteStorageURL = "http://www.impc.cz/api/";
 
     currentArtist = new SArtist;
 
