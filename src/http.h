@@ -27,6 +27,7 @@
 #define	HTTP_H
 
 #include "ClientException.h"
+#include "clientsettings.h"
 #include <cstdlib>
 #include <curl/curl.h>
 
@@ -55,6 +56,9 @@ namespace utils {
     curl_slist * headers;
     int httpTimeout;
     std::string headLog;
+    
+    void init();
+    void clean();
 
     void wait();
 

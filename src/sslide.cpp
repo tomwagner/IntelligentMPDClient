@@ -51,7 +51,9 @@ namespace DataStorage {
 
     slide["right"] = getNumOfRight();
     slide["wrong"] = getNumOfWrong();
-    slide["voted"] = (!canIVote());
+//    slide["voted"] = (!canIVote());
+    slide["votedRight"] = isVotedRight();
+    slide["votedWrong"] = isVotedWrong();
     slide["sync"] = isSynced();
 
     slide["sourceName"] = getName();
@@ -72,7 +74,9 @@ namespace DataStorage {
 
     setNumOfRight(slide["right"].asUInt());
     setNumOfWrong(slide["wrong"].asUInt());
-    setVoted(slide["voted"].asBool());
+//    setVoted(slide["voted"].asBool());
+    setVotedRight(slide["votedRight"].asBool());
+    setVotedWrong(slide["votedWrong"].asBool());
     setSynced(slide["sync"].asBool());
 
     setName(slide["sourceName"].asString());

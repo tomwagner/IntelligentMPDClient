@@ -32,16 +32,29 @@
 #include <list>
 
 class AgentManager {
-public:
-  AgentManager(bool);
-  virtual ~AgentManager();
-  
-  void runAgents();
-  void killAgents(); 
 private:
-  bool DISABLE_AGENTS;
+  static AgentManager * instance;
+public:
+
+  static AgentManager *GetInstance() {
+    if (instance == NULL) {
+      instance = new AgentManager(false);
+    }
+    return instance;
+  }
+  void runAgents();
+  void killAgents();
+
+  virtual ~AgentManager();
+private:
+  AgentManager(bool);
+
+
+
+private:
+  bool m_disabled;
   xmlMutexPtr mutex;
-  
+
   std::list<source*> sourcesList;
   std::list<Agent *> agentList;
 };

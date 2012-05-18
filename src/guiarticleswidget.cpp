@@ -38,6 +38,7 @@ namespace GUI {
 
 
   ArticlesWidget::ArticlesWidget(Glib::RefPtr<Gtk::Builder>& builder) :
+  currentArtist(NULL),
   currentPosition(0),
   it(NULL) {
     builder->get_widget("articleTab", articleTab);
@@ -72,6 +73,8 @@ namespace GUI {
 
     // classification info
     builder->get_widget("articleClass", articleClass);
+
+    clearArticlesWidget();
   }
 
 
@@ -93,6 +96,7 @@ namespace GUI {
     position << "/";
     position << articlesList->size();
 
+    setActive(true);
 
     checkIfICanVote();
     checkClassOfObject(a);
@@ -126,8 +130,7 @@ namespace GUI {
     articlesList = &currentArtist->articles;
     it = articlesList->begin();
 
-    checkIfICanVote();
-
+    //    checkIfICanVote();
     if (!articlesList->empty())
       showArticle(it->second);
     else
@@ -135,8 +138,23 @@ namespace GUI {
   }
 
 
+  void ArticlesWidget::setActive(bool b) {
+    articleNext->set_sensitive(b);
+    articlePrev->set_sensitive(b);
+
+    articleRight->set_sensitive(b);
+    articleWrong->set_sensitive(b);
+    articleSlideshow->set_sensitive(b);
+  }
+
+
   void ArticlesWidget::clearArticlesWidget() {
+    // set position to 0
+    currentPosition = 0;
+    
     articleTab->set_label("Articles");
+
+    setActive(false);
 
     articleTitle->set_label("");
     articleAbout->set_label("");
@@ -146,15 +164,17 @@ namespace GUI {
     articleSourceName->set_label("");
     articleSourceUrl->set_markup("");
 
+
     // clear classification
     articleClass->set_from_icon_name("gtk-yes", Gtk::ICON_SIZE_SMALL_TOOLBAR);
   }
 
 
   void ArticlesWidget::updateArticlesWidget() {
+    if (currentArtist == NULL) return;
     if (articlesList == NULL) return;
     if (!articlesList->empty()) {
-      if (it->second == NULL)
+      if (currentPosition == 0)
         it = articlesList->begin();
       showArticle(it->second);
     }

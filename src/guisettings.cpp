@@ -62,7 +62,7 @@ namespace GUI {
     hostLabel.set_label(_("Host:"));
     hostLabel.set_alignment(1.0, 0.5);
     tableMPD.attach(hostLabel, 0, 1, 0, 1);
-    host.set_text(clientSettings->getHost());
+    host.set_text(Config::GetInstance()->getHost());
     tableMPD.attach(host, 1, 2, 0, 1);
 
     //port
@@ -70,7 +70,7 @@ namespace GUI {
     portLabel.set_alignment(1.0, 0.5);
     tableMPD.attach(portLabel, 0, 1, 1, 2);
     // nastavíme rozsahy
-    port.set_adjustment(Gtk::Adjustment::create(clientSettings->getPort(), 1.0, 65535.0, 1.0, 5.0, 0.0));
+    port.set_adjustment(Gtk::Adjustment::create(Config::GetInstance()->getPort(), 1.0, 65535.0, 1.0, 5.0, 0.0));
     port.set_progress_pulse_step(1.0);
     tableMPD.attach(port, 1, 2, 1, 2);
 
@@ -85,11 +85,11 @@ namespace GUI {
     pass.set_visibility(false);
     pass.set_invisible_char('*');
     pass.set_sensitive(false);
-    pass.set_text(clientSettings->getPassword());
+    pass.set_text(Config::GetInstance()->getPassword());
     tableMPD.attach(pass, 1, 2, 3, 4);
 
     // pokud heslo není prázdné, odcheckujeme
-    if (!clientSettings->getPassword().empty()) {
+    if (!Config::GetInstance()->getPassword().empty()) {
       auth.set_active(true);
     }
 
@@ -119,40 +119,20 @@ namespace GUI {
     tableProg.set_border_width(6);
     tableProg.set_row_spacings(6);
     tableProg.set_spacings(6);
-    //config
-    configLabel.set_label(_("Config dir:"));
-    configLabel.set_alignment(1.0, 0.5);
-    tableProg.attach(configLabel, 0, 1, 0, 1);
-    tableProg.attach(config, 1, 2, 0, 1);
-    config.set_title(_("Select Config Directory"));
-    config.set_action(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    config.signal_current_folder_changed().connect(sigc::mem_fun(*this, &Settings::onConfDirSelect));
-
-    // pokusíme se nastavit config path
-    if (!config.set_current_folder(clientSettings->getConfPath())) {
-      Gtk::MessageDialog dialog(*this,
-              "Error in Config path doesn't exist.",
-              false, Gtk::MESSAGE_ERROR);
-      dialog.run();
-
-      // zobrazíme nastavení
-      show();
-    }
-
 
     //temp
     tempLabel.set_label("Temp dir:");
     tempLabel.set_alignment(1.0, 0.5);
     tableProg.attach(tempLabel, 0, 1, 1, 2);
-    tableProg.attach(temp, 1, 2, 1, 2);
+    tableProg.attach(tempDir, 1, 2, 1, 2);
     //nastavení dialogu pro výběr
-    temp.set_title("Select Temp Directory");
+    tempDir.set_title("Select Temp Directory");
     //vybíráme celou složku
-    temp.set_action(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    temp.signal_current_folder_changed().connect(sigc::mem_fun(*this, &Settings::onTempDirSelect));
+    tempDir.set_action(Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    tempDir.signal_current_folder_changed().connect(sigc::mem_fun(*this, &Settings::onTempDirSelect));
 
     // pokusíme se nastavit temp path
-    if (!temp.set_current_folder(clientSettings->getTempPath())) {
+    if (!tempDir.set_current_folder(Config::GetInstance()->getTempPath())) {
       Gtk::MessageDialog dialog(*this,
               "Error in Temp path doesn't exist.",
               false, Gtk::MESSAGE_ERROR);
@@ -223,13 +203,8 @@ namespace GUI {
   }
 
 
-  void Settings::onConfDirSelect() {
-    clientSettings->setConfPath(config.get_current_folder()+"/");
-  }
-
-
   void Settings::onTempDirSelect() {
-    clientSettings->setTempPath(temp.get_current_folder()+"/");
+    Config::GetInstance()->setTempPath(tempDir.get_current_folder() + "/");
   }
 
 
@@ -237,51 +212,31 @@ namespace GUI {
     // pokud se změnilo nastavení konfigurace připojení k MPD
     if (mpdSettingChanged) {
       // odpojíme
-      clientMPD.Disconnect();
+      MPD::Client::GetInstance()->Disconnect();
 
-      clientMPD.SetHostname(host.get_text());
-      clientMPD.SetPassword(pass.get_text());
-      clientMPD.SetPort(port.get_value());
+      MPD::Client::GetInstance()->SetHostname(host.get_text());
+      MPD::Client::GetInstance()->SetPassword(pass.get_text());
+      MPD::Client::GetInstance()->SetPort(port.get_value());
 
-      // zkusíme se připojit
-      if (!clientMPD.Connect()) {
+      Config::GetInstance()->setHost(host.get_text());
+      Config::GetInstance()->setPort((int) port.get_value());
 
-        // zkusíme se připojit se starými údaji
-        //clientMPD.connect(clientSettings->getHost(), clientSettings->getPort(), clientSettings->getPassword());
-
-        // zobrazíme dialog o chybě
-        Gtk::MessageDialog dialog(*this, "Error in connecting to MPD", false, Gtk::MESSAGE_ERROR);
-        dialog.run();
-        return;
-      } else {
-        // zobrazíme dialog ok
-        Gtk::MessageDialog dialog(*this, "MPD Client Successfully Connected", false, Gtk::MESSAGE_INFO);
-        dialog.run();
-      }
-
-
-      clientSettings->setHost(host.get_text());
-      clientSettings->setPort((int) port.get_value());
-
-      // pokud je povolena autentizace, ukládáme heslo
-
-      clientSettings->setPassword(pass.get_text());
+      // if autentification needed
+      Config::GetInstance()->setPassword(pass.get_text());
       if (auth.get_active() == false)
-        clientSettings->setPassword("");
+        Config::GetInstance()->setPassword("");
     }
 
-    clientSettings->setConfPath(config.get_current_folder()+"/");
-    clientSettings->setTempPath(temp.get_current_folder()+"/");
+    Config::GetInstance()->setTempPath(tempDir.get_current_folder() + "/");
 
-    // skryjeme okno
     hide();
+
+    Config::GetInstance()->saveSettings();
   }
 
 
   void Settings::onClose() {
     hide();
   }
-
-
 
 }

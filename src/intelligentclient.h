@@ -25,22 +25,21 @@
 
 #ifndef INTELLIGENTCLIENT_H
 #define	INTELLIGENTCLIENT_H
+#include "clientsettings.h"
 #include "guimainwindow.h"
 #include "mpdclient.h"
-#include "clientsettings.h"
-#include "storage.h"
 #include "agentmanager.h"
 
 class IntelligentClient {
 public:
   IntelligentClient(int argc, char** argv);
   virtual ~IntelligentClient();
+ 
 private:
   bool updateStatus();
-  Storage * clientStorage;
-  
+  Gtk::Main kit;
+
 };
-  extern AgentManager * agentManager;
 
 #endif	/* INTELLIGENTCLIENT_H */
 

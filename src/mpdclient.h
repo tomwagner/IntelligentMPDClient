@@ -87,11 +87,24 @@ namespace MPD {
   void FreeItemList(ItemList &);
 
   class Client {
+  private:
+    static Client * instance;
+
+  public:
+
+    static Client *GetInstance() {
+      if (instance == NULL) {
+        instance = new Client();
+      }
+      return instance;
+    }
+  private:
     typedef void (*StatusUpdater) (Client *, StatusChanges, void *);
     typedef void (*ErrorHandler) (Client *, int, const char *, void *);
 
-  public:
+
     Client();
+  public:
     ~Client();
 
     bool Connect();
@@ -365,6 +378,6 @@ namespace MPD {
   };
 }
 
-extern MPD::Client clientMPD;
+//extern MPD::Client clientMPD;
 
 #endif

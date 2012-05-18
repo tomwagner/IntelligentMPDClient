@@ -47,6 +47,11 @@ namespace utils {
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 #endif
 
+    // CURL BUG FIX
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+
+
+    curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1);
     // follow redirections
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 
@@ -57,8 +62,8 @@ namespace utils {
     curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "/tmp/impc_cookies.txt");
 
     // create head log
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &writeText);
-    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headLog);
+//    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &writeText);
+//    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headLog);
 
 
     // FAKE BROWSER BEHAVIOR
@@ -71,6 +76,10 @@ namespace utils {
     curl_slist_append(headers, "Connection: keep-alive");
     curl_slist_append(headers, "Cache-Control:max-age=0");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+    // we accept all certificates in https
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
   }
 
 

@@ -26,10 +26,11 @@
 #include "agentmanager.h"
 
 #include <iostream>
-//#define DISABLE_AGENTS 0
+
+AgentManager* AgentManager::instance = NULL;
 
 
-AgentManager::AgentManager(bool status) : DISABLE_AGENTS(status) {
+AgentManager::AgentManager(bool status) : m_disabled(status) {
   // init parser
   xmlInitParser();
 }
@@ -45,30 +46,30 @@ AgentManager::~AgentManager() {
 
 void AgentManager::runAgents() {
 
-  if (DISABLE_AGENTS) return;
+  if (!Config::GetInstance()->isAgentsEnabled()) return;
 
   // if there is running agents, we kill them
   if (!agentList.empty()) killAgents();
 
   // load sources list
-  sourcesList = clientSettings->getSourcesList();
+  sourcesList = Config::GetInstance()->getSourcesList();
   std::list<source*>::iterator it;
 
 
   // client not playing, we cant search
-  if (!clientMPD.Connected()) {
+  if (!MPD::Client::GetInstance()->Connected()) {
     std::cout << "We are not connected to MPD! AGENT EXIT" << std::endl;
     return;
   }
-  clientMPD.UpdateStatus();
-  if (!clientMPD.isPlaying()) {
+  MPD::Client::GetInstance()->UpdateStatus();
+  if (!MPD::Client::GetInstance()->isPlaying()) {
     std::cout << "We are not playing MPD! AGENT EXIT" << std::endl;
     return;
   }
-  
+
   // get now playing song
-  clientMPD.UpdateStatus();
-  MPD::Song s = clientMPD.GetCurrentSong();
+  MPD::Client::GetInstance()->UpdateStatus();
+  MPD::Song s = MPD::Client::GetInstance()->GetCurrentSong();
 
   // create Agents for searching content
   for (it = sourcesList.begin(); it != sourcesList.end(); it++) {
@@ -90,7 +91,6 @@ void AgentManager::killAgents() {
   for (it = agentList.begin(); it != agentList.end(); it++) {
     delete (*it);
   }
-
 
   // clear list
   agentList.clear();

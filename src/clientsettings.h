@@ -39,17 +39,25 @@ typedef struct {
   std::string url;
 } source;
 
-class ClientSettings {
+class Config {
+private:
+  static Config * instance;
+
 public:
-  ClientSettings();
-  virtual ~ClientSettings();
+
+  static Config *GetInstance() {
+    if (instance == NULL) {
+      instance = new Config();
+    }
+    return instance;
+  }
+  virtual ~Config();
 
   // get methods
   std::string getHost() const;
   int getPort() const;
   std::string getPassword() const;
 
-  std::string getConfPath() const;
   std::string getTempPath() const;
 
 
@@ -58,27 +66,37 @@ public:
   void setPort(int port);
   void setPassword(std::string password);
 
-  void setConfPath(std::string path);
   void setTempPath(std::string path);
 
+  void setRemoteStorageEnabled(bool b);
+  bool isRemoteStorageEnabled();
+  
+  void setAgentsEnabled(bool b);
+  bool isAgentsEnabled();
 
   std::list<source*>& getSourcesList();
   void initSourcesList();
   void insertSource(bool active, std::string url);
 
-private:
-  std::string m_home;
-  std::string DEFAULTCONFIGFILEPATH;
-  std::string DEFAULTSOURCESFILEPATH;
 
   void saveSources();
-  void loadSources();
-
   void saveSettings();
-  void loadSettings();
+  
+private:
+  Config();
+  std::string m_home;
+  std::string settingsFilename;
+  std::string sourceFilename;
+  std::string DEFAULTSOURCESFILEPATH;
 
   void save();
-  void loadClientSettings();
+  void loadSources();
+
+
+  void loadSettings();
+
+
+  void loadConfig();
 
 
 
@@ -91,9 +109,10 @@ private:
   std::string m_confPath;
 
   std::list<source*> sourcesList;
+  bool m_remoteStorage;
+  bool m_enabledAgents;
 };
 
-extern ClientSettings * clientSettings;
 
 #endif	/* CLIENTSETTINGS_H */
 

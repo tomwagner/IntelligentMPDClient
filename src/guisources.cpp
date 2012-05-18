@@ -156,7 +156,7 @@ namespace GUI {
 
   void Sources::load() {
     // načteme seznam zdrojů
-    std::list<source*> sourcesList = clientSettings->getSourcesList();
+    std::list<source*> sourcesList = Config::GetInstance()->getSourcesList();
 
     // projdeme všechny zdroje a uložíme nastavení do widgetu
     std::list<source*>::iterator it;
@@ -170,15 +170,16 @@ namespace GUI {
 
   void Sources::save() {
     // vymažeme seznam zdrojů
-    clientSettings->initSourcesList();
+    Config::GetInstance()->initSourcesList();
 
     // projdeme všechny položky widgetu a uložíme je
     Gtk::TreeModel::Children children = treeModel->children();
     for (Gtk::TreeModel::Children::iterator iter = children.begin(); iter != children.end(); ++iter) {
       Gtk::TreeModel::Row modelRow = *iter;
       Glib::ustring url = modelRow[columns.url];
-      clientSettings->insertSource((bool) modelRow[columns.active], url.c_str());
+      Config::GetInstance()->insertSource((bool) modelRow[columns.active], url.c_str());
     }
+    Config::GetInstance()->saveSources();
   }
 
 

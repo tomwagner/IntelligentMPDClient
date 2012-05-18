@@ -10,6 +10,7 @@
  </xsl:template>
 
  <xsl:template match="script"/>
+ <xsl:template match="style"/>
  <xsl:template match="comment()"/>
  <xsl:template match="li"/>
  <xsl:template match="ul"/>

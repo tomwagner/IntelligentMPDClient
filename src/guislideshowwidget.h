@@ -105,6 +105,7 @@ namespace GUI {
     // classification
     Gtk::Image * slideClass;
     void checkClassOfObject(SSlide * s);
+    void setActive(bool b);
   private:
     int currentPosition;
 

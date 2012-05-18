@@ -77,7 +77,7 @@ namespace GUI {
 
 
   bool ArtistsWidget::checkMPDConnection() {
-    if (clientMPD.Connected()) {
+    if (MPD::Client::GetInstance()->Connected()) {
       loadArtistsFromMPD();
       loadArtists();
       return false;
@@ -89,7 +89,7 @@ namespace GUI {
 
   void ArtistsWidget::loadArtistsFromMPD() {
     // load artists from MPD server
-    clientMPD.GetList(artists, MPD_TAG_ARTIST);
+    MPD::Client::GetInstance()->GetList(artists, MPD_TAG_ARTIST);
     for (int i = 0; i < artists.size(); i++) {
       artistList.push_back(artists[i]);
     }
@@ -161,9 +161,9 @@ namespace GUI {
 
 
     // start searching for artist
-    clientMPD.StartSearch(1);
-    clientMPD.AddSearch(MPD_TAG_ARTIST, artist);
-    clientMPD.CommitSearch(m_actualSongs);
+    MPD::Client::GetInstance()->StartSearch(1);
+    MPD::Client::GetInstance()->AddSearch(MPD_TAG_ARTIST, artist);
+    MPD::Client::GetInstance()->CommitSearch(m_actualSongs);
 
     // sort songs
     std::sort(m_actualSongs.begin(), m_actualSongs.end(), actualSongSortCond);
@@ -260,8 +260,8 @@ namespace GUI {
       loadArtistsSongs(s.c_str());
     } else if (isArtist == 0) {
       // add to queue and play
-      clientMPD.AddSong(*song, clientMPD.GetPlaylistLength());
-      clientMPD.Play(clientMPD.GetPlaylistLength());
+      MPD::Client::GetInstance()->AddSong(*song, MPD::Client::GetInstance()->GetPlaylistLength());
+      MPD::Client::GetInstance()->Play(MPD::Client::GetInstance()->GetPlaylistLength());
     } else {
       loadArtists();
     }

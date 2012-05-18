@@ -23,7 +23,7 @@
  * @brief 
  */
 #include "simage.h"
-#include "clientsettings.h"
+
 #define DEBUG 0
 using namespace utils;
 
@@ -93,7 +93,7 @@ namespace DataStorage {
 
   void SImage::downloadImage() {
     try {
-      m_localPath = m_http->GETImage(m_url->getText(), clientSettings->getTempPath(), m_url->getHash());
+      m_localPath = m_http->GETImage(m_url->getText(), Config::GetInstance()->getTempPath(), m_url->getHash());
     } catch (InputException &e) {
       std::cerr << "SImage - InputExeption:" << e.what() << std::endl;
     } catch (ClientException &e) {

@@ -67,10 +67,7 @@ namespace GUI {
 
     if (coverList == NULL) return;
     if (!coverList->empty()) {
-      if (it->second == NULL)
-        it = coverList->begin();
-      std::cout << "showCover" << std::endl;
-      if (it->second != NULL)
+      if (currentPosition == 0)
         showCover(it->second);
     }
   }
@@ -116,6 +113,7 @@ namespace GUI {
 
 
   void CoverWidget::clearCover() {
+    currentPosition = 0;
     showLoading();
 
     // clear classification
@@ -134,7 +132,7 @@ namespace GUI {
 
 
   void CoverWidget::showLoading() {
-      cover->set_from_icon_name("gtk-no", Gtk::ICON_SIZE_DIALOG);
+    cover->set_from_icon_name("gtk-no", Gtk::ICON_SIZE_DIALOG);
   }
 
 

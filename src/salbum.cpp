@@ -34,7 +34,7 @@ namespace DataStorage {
 
 
   SAlbum::~SAlbum() {
-    
+
     delete img;
     delete name;
   }
@@ -51,7 +51,9 @@ namespace DataStorage {
 
     album["right"] = getNumOfRight();
     album["wrong"] = getNumOfWrong();
-    album["voted"] = (!canIVote());
+    //    album["voted"] = (!canIVote());
+    album["votedRight"] = isVotedRight();
+    album["votedWrong"] = isVotedWrong();
     album["sync"] = (isSynced());
 
     album["sourceName"] = getName();
@@ -70,7 +72,9 @@ namespace DataStorage {
 
     setNumOfRight(album["right"].asUInt());
     setNumOfWrong(album["wrong"].asUInt());
-    setVoted(album["voted"].asBool());
+    //    setVoted(album["voted"].asBool());
+    setVotedRight(album["votedRight"].asBool());
+    setVotedWrong(album["votedWrong"].asBool());
     setSynced(album["sync"].asBool());
 
     setName(album["sourceName"].asString());

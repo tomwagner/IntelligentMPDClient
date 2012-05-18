@@ -31,7 +31,9 @@ namespace DataStorage {
   SFeedback::SFeedback() :
   m_rightCount(0),
   m_wrongCount(0),
-  m_voted(false),
+  m_votedRight(false),
+  m_votedWrong(false),
+  //  m_voted(false),
   m_synced(false) {
 
   }
@@ -42,13 +44,30 @@ namespace DataStorage {
   }
 
 
-  void SFeedback::rememberVoting() {
-    m_voted = true;
+  //  void SFeedback::rememberVoting() {
+  //    m_voted = true;
+  //  }
+
+
+  void SFeedback::voteRight() {
+    if (!canIVote()) return;
+    m_rightCount++;
+    m_votedRight = true;
+  }
+
+
+  void SFeedback::voteWrong() {
+    if (!canIVote()) return;
+    m_wrongCount++;
+    m_votedWrong = true;
   }
 
 
   bool SFeedback::canIVote() {
-    return (!m_voted);
+    if (m_votedRight || m_votedWrong)
+      return false;
+    return true;
+    //    return (!m_voted);
   }
 
 
@@ -58,10 +77,9 @@ namespace DataStorage {
 
 
   void SFeedback::setSynced(bool s) {
-    if (m_voted) {
+    //    if (m_voted) {
+    if ((m_votedRight) || (m_votedWrong)) {
       m_synced = s;
     }
   }
-
-
 }

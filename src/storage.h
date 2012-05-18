@@ -26,7 +26,7 @@
 #ifndef STORAGE_H
 #define	STORAGE_H
 
-#include "clientsettings.h"
+
 #include "mpdclient.h"
 #include "utils.h"
 #include "http.h"
@@ -38,24 +38,28 @@ using namespace NaiveBayes;
 
 namespace DataStorage {
 
-  typedef struct {
-    SText name;
-    //    std::list<std::string> articles;
-    //    std::list<std::string> relatedVideos;
-    //    std::list<std::string> about;
-  } STrack;
-
   class Storage {
-  public:
-    Storage();
-    virtual ~Storage();
+  private:
+    static Storage * instance;
 
+  public:
+
+    static Storage * GetInstance() {
+      if (instance == NULL) {
+        instance = new Storage();
+      }
+      return instance;
+    }
+    
     void loadNewSong(MPD::Song s);
 
     SArtist * currentArtist;
-    STrack * currentTrack;
-
+    
+    virtual ~Storage();
   private:
+    Storage();
+
+
     HTTP * http;
     Json::Value record;
 
@@ -78,9 +82,9 @@ namespace DataStorage {
     std::string createArtistFilePath(std::string artist);
     std::string createFilePath(std::string artist, std::string title);
 
+    void loadWidgets();
   };
 
-  extern Storage storage;
 }
 #endif	/* STORAGE_H */
 

@@ -26,7 +26,8 @@
 //#include "error.h"
 #include "mpdclient.h"
 
-MPD::Client clientMPD;
+//MPD::Client clientMPD;
+MPD::Client* MPD::Client::instance = NULL;
 
 const char *MPD::Message::PartOfSongsAdded = "Only part of requested songs' list added to playlist!";
 const char *MPD::Message::FullPlaylist = "Playlist is full!";
@@ -171,7 +172,7 @@ void MPD::Client::UpdateStatus() {
       // this from mpd while being in idle mode
       time(&itsElapsedTimer[1]);
       double diff = difftime(itsElapsedTimer[1], itsElapsedTimer[0]);
-      if (diff >= 1.0 && clientMPD.GetState() == psPlay) {
+      if (diff >= 1.0 && MPD::Client::GetInstance()->GetState() == psPlay) {
         time(&itsElapsedTimer[0]);
         itsElapsed += diff;
         StatusChanges changes;
@@ -468,10 +469,10 @@ void MPD::Client::Seek(unsigned where) {
     return;
   if (!isCommandsListEnabled) {
     GoBusy();
-    mpd_run_seek_pos(itsConnection, clientMPD.GetCurrentSongPos(), where);
+    mpd_run_seek_pos(itsConnection, MPD::Client::GetInstance()->GetCurrentSongPos(), where);
   } else {
     assert(!isIdle);
-    mpd_send_seek_pos(itsConnection, clientMPD.GetCurrentSongPos(), where);
+    mpd_send_seek_pos(itsConnection, MPD::Client::GetInstance()->GetCurrentSongPos(), where);
   }
 }
 

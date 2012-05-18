@@ -46,6 +46,7 @@ namespace DataStorage {
 
 
   void SArtist::clear() {
+
     // reset synced
     m_synced = false;
 
@@ -329,7 +330,7 @@ namespace DataStorage {
     std::map<std::string, SSlide *>::iterator itI;
     for (itI = images.begin(); itI != images.end(); itI++) {
       if (isSynced())
-          (*itI).second->setSynced(m_synced);
+        (*itI).second->setSynced(m_synced);
       artist["images"].append((*itI).second->getSlide());
     }
 

@@ -42,21 +42,23 @@ namespace DataStorage {
     SFeedback();
     virtual ~SFeedback();
 
-    void inline voteRight() {
-      m_rightCount++;
-      rememberVoting();
-    }
 
-    void inline voteWrong() {
-      m_wrongCount++;
-      rememberVoting();
-    }
+    void voteWrong();
+    void voteRight();
+    //    void inline voteRight() {
+    //      m_rightCount++;
+    //      rememberVoting();
+    //    }
+    //
+    //    void inline voteWrong() {
+    //      m_wrongCount++;
+    //      rememberVoting();
+    //    }
 
     FeedbackResult isRight() const {
       if (m_rightCount == m_wrongCount) return unknownClass;
       else if (m_rightCount > m_wrongCount) return rightClass;
       else if (m_rightCount < m_wrongCount) return wrongClass;
-
     }
 
     unsigned inline getNumOfRight() const {
@@ -75,8 +77,24 @@ namespace DataStorage {
       m_wrongCount = num;
     }
 
-    void inline setVoted(bool v) {
-      m_voted = v;
+    //    void inline setVoted(bool v) {
+    //      m_voted = v;
+    //    }
+
+    void inline setVotedRight(bool v) {
+      m_votedRight = v;
+    }
+
+    void inline setVotedWrong(bool v) {
+      m_votedWrong = v;
+    }
+
+    bool inline isVotedRight() {
+      return m_votedRight;
+    }
+
+    bool inline isVotedWrong() {
+      return m_votedWrong;
     }
 
 
@@ -87,11 +105,14 @@ namespace DataStorage {
     unsigned int m_rightCount;
     unsigned int m_wrongCount;
 
-    bool m_voted;
+    //    bool m_voted;
     bool m_synced;
 
+    bool m_votedRight;
+    bool m_votedWrong;
+
   private:
-    void rememberVoting();
+//    void rememberVoting();
 
   };
 }

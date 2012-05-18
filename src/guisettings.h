@@ -37,10 +37,6 @@ namespace GUI {
     Settings();
     virtual ~Settings();
   private:
-    Gtk::Window * settingsWindow;
-    Gtk::Widget * child;
-
-    // hlídá, zda bylo změněno nastavení mpd spojení
     bool mpdSettingChanged;
   protected:
 
@@ -80,10 +76,7 @@ namespace GUI {
 
     // temp
     Gtk::Label tempLabel;
-    Gtk::FileChooserButton temp;
-    // config
-    Gtk::Label configLabel;
-    Gtk::FileChooserButton config;
+    Gtk::FileChooserButton tempDir;
 
 
     Gtk::ButtonBox bbox;

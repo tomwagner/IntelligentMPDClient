@@ -49,9 +49,11 @@ namespace DataStorage {
 
     article["right"] = getNumOfRight();
     article["wrong"] = getNumOfWrong();
-    article["voted"] = (!canIVote());
+    //    article["voted"] = (!canIVote());
+    article["votedRight"] = isVotedRight();
+    article["votedWrong"] = isVotedWrong();
     article["sync"] = isSynced();
-    
+
     article["sourceName"] = getName();
     article["sourceUrl"] = getSourceName();
     article["sourceIcon"] = getUrl()->getText();
@@ -65,7 +67,8 @@ namespace DataStorage {
 
     setNumOfRight(article["right"].asUInt());
     setNumOfWrong(article["wrong"].asUInt());
-    setVoted(article["voted"].asBool());
+    setVotedRight(article["votedRight"].asBool());
+    setVotedWrong(article["votedWrong"].asBool());
     setSynced(article["sync"].asBool());
 
     setName(article["sourceName"].asString());

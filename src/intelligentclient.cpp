@@ -29,93 +29,82 @@
 #define DEBUG 1
 #define ENABLE_GUI 1
 
-AgentManager * agentManager;
-
 
 void updatePlayer(MPD::Client *, MPD::StatusChanges changed, void *) {
 
-  if (changed.SongID) { //changed.PlayerState || 
-    if (clientMPD.isPlaying()) {
+  if (changed.SongID) {
+    if (MPD::Client::GetInstance()->isPlaying()) {
 #if DEBUG
       std::cout << "Song changed" << std::endl;
 #endif
 
-      MPD::Song song = clientMPD.GetCurrentSong();
+      MPD::Song song = MPD::Client::GetInstance()->GetCurrentSong();
 
       // set song parameters to storage
-      storage.loadNewSong(song);
+      Storage::GetInstance()->loadNewSong(song);
 
-
-      agentManager->killAgents();
-      agentManager->runAgents();
+      AgentManager::GetInstance()->runAgents();
 
       // set text widgets
-      gui->setSongLabel(song.GetArtist() + " - " + song.GetTitle());
-      gui->setArtist(song.GetArtist());
-      gui->setTitle(song.GetTitle());
-      gui->setAlbum(song.GetAlbum());
-      gui->setGenre(song.GetGenre());
-      gui->setTimeScale(clientMPD.GetElapsedTime(), clientMPD.GetTotalTime());
-      gui->setStatusBar(_("IMPC Playing: ") + song.GetFile());
+      GUI::MainWindow::GetInstance()->setSongLabel(song.GetArtist() + " - " + song.GetTitle());
+      GUI::MainWindow::GetInstance()->setArtist(song.GetArtist());
+      GUI::MainWindow::GetInstance()->setTitle(song.GetTitle());
+      GUI::MainWindow::GetInstance()->setAlbum(song.GetAlbum());
+      GUI::MainWindow::GetInstance()->setGenre(song.GetGenre());
+      GUI::MainWindow::GetInstance()->setTimeScale(MPD::Client::GetInstance()->GetElapsedTime(), MPD::Client::GetInstance()->GetTotalTime());
+      GUI::MainWindow::GetInstance()->setStatusBar(_("IMPC Playing: ") + song.GetFile());
     }
-  } else if (changed.Volume) {
+  } else if (changed.ElapsedTime) {
+    if (!Config::GetInstance()->isAgentsEnabled()){
+      AgentManager::GetInstance()->killAgents();
+    }
   }
+
+
 
 }
 
 
 IntelligentClient::IntelligentClient(int argc, char** argv) {
-
+  std::cout << "ic" << std::endl;
 
   // connect to MPD server
-  clientMPD.SetHostname(clientSettings->getHost());
-  clientMPD.SetPassword(clientSettings->getPassword());
-  clientMPD.SetPort(clientSettings->getPort());
-  clientMPD.Connect();
+  MPD::Client::GetInstance()->SetHostname(Config::GetInstance()->getHost());
+  MPD::Client::GetInstance()->SetPassword(Config::GetInstance()->getPassword());
+  MPD::Client::GetInstance()->SetPort(Config::GetInstance()->getPort());
+  MPD::Client::GetInstance()->Connect();
 
-  clientMPD.SetStatusUpdater(updatePlayer, 0);
-
-  // init agent manager
-  try {
-    if (argc >= 2)
-      agentManager = new AgentManager(true);
-    else
-      agentManager = new AgentManager(false);
-
-  } catch (InputException &e) {
-    std::cerr << "Input exception:" << e.what() << std::endl;
-  }
+  MPD::Client::GetInstance()->SetStatusUpdater(updatePlayer, 0);
 
   // check if we are connected
-  if (clientMPD.Connected()) {
-    gui->setStatusBar(_("MPD connected: ") + clientSettings->getHost() + ":" + utils::intToString(clientSettings->getPort()));
-    //    mWindow->showInfoDialog(_("MPD Client Successfully Connected"));
-    //    std::cout << "playlistLen" << clientMPD.GetPlaylistContent() << std::endl;
-
+  if (MPD::Client::GetInstance()->Connected()) {
+    GUI::MainWindow::GetInstance()->setStatusBar(_("MPD connected: ") + Config::GetInstance()->getHost() + ":" + utils::intToString(Config::GetInstance()->getPort()));
   } else {
-    gui->setStatusBar(_("Error while connecting to MPD server"));
-    gui->showErrorDialog(_("Error in connecting to MPD"));
+    GUI::MainWindow::GetInstance()->setStatusBar(_("Error while connecting to MPD server"));
+    GUI::MainWindow::GetInstance()->showErrorDialog(_("Error in connecting to MPD"));
   }
 
 #if ENABLE_GUI
   // run main window
-  kit->run(*gui->getWindow());
+  kit.run(*GUI::MainWindow::GetInstance()->getWindow());
 #endif
 }
 
 
 IntelligentClient::~IntelligentClient() {
+
 #if ENABLE_GUI
-  delete kit;
-  delete gui;
+  delete GUI::MainWindow::GetInstance();
 #endif
-  delete agentManager;
-  delete clientSettings;
+  delete AgentManager::GetInstance();
+  delete Config::GetInstance();
+  delete Storage::GetInstance();
+  delete MPD::Client::GetInstance();
 }
 
 
 bool IntelligentClient::updateStatus() {
-  clientMPD.UpdateStatus();
+  MPD::Client::GetInstance()->UpdateStatus();
   return true;
 }
 

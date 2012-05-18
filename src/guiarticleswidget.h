@@ -55,6 +55,7 @@ namespace GUI {
     void showArticle(SArticle *);
 
     void removeMarkup(std::string &s);
+    std::string getPosition();
 
     std::map<std::string, SArticle *>* articlesList;
     std::map<std::string, SArticle *>::iterator it;
@@ -96,6 +97,7 @@ namespace GUI {
     // classification
     Gtk::Image * articleClass;
     void checkClassOfObject(SArticle * s);
+    void setActive(bool b);
 
   };
 }

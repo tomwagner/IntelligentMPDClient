@@ -34,11 +34,13 @@ namespace GUI {
 
 
   SlideshowWidget::SlideshowWidget(Glib::RefPtr<Gtk::Builder>& builder) :
+  currentArtist(NULL),
   slideshowStarted(false),
   slideWidth(100),
   slideHeight(100),
   loadingIcon("ui/loader.gif"),
-  it(NULL) {
+  it(NULL),
+  currentPosition(0) {
     builder->get_widget("slideshowTab", slideshowTab);
     builder->get_widget("slideshowWidget", slideshowWidget);
     builder->get_widget("slideTitle", slideTitle);
@@ -72,6 +74,8 @@ namespace GUI {
 
     slideRight->signal_clicked().connect(sigc::mem_fun(*this, &SlideshowWidget::rightFeedback));
     slideWrong->signal_clicked().connect(sigc::mem_fun(*this, &SlideshowWidget::wrongFeedback));
+
+    setActive(false);
   }
 
 
@@ -80,10 +84,12 @@ namespace GUI {
 
 
   void SlideshowWidget::updateSlideshowWidget() {
+    if (currentArtist == NULL) return;
     if (slideList == NULL) return;
     if (!slideList->empty()) {
-      if (it->second == NULL)
+      if (currentPosition == 0) {
         it = slideList->begin();
+      }
       showSlide(it->second);
     }
   }
@@ -96,7 +102,8 @@ namespace GUI {
     position << "/";
     position << slideList->size();
 
-
+    setActive(true);
+    setActive(true);
     checkIfICanVote();
 
     checkClassOfObject(s);
@@ -121,17 +128,27 @@ namespace GUI {
     utils::htmlSpecialChars(url);
 
     slideSourceUrl->set_markup("<a href=\"" + url + "\">" + url + "</a>");
+  }
 
+
+  void SlideshowWidget::setActive(bool b) {
+    slideNext->set_sensitive(b);
+    slidePrev->set_sensitive(b);
+
+    slideRight->set_sensitive(b);
+    slideWrong->set_sensitive(b);
+    slideSlideshow->set_sensitive(b);
   }
 
 
   void SlideshowWidget::setSlideshowWidget(SArtist* artist) {
+
     currentArtist = artist;
     slideList = &currentArtist->images;
-    it = slideList->begin();
+    it = currentArtist->images.begin();
 
     // check for voting
-    checkIfICanVote();
+    //    checkIfICanVote();
 
     // show slide
     if (!slideList->empty())
@@ -142,6 +159,10 @@ namespace GUI {
 
 
   void SlideshowWidget::clearSlide() {
+    currentPosition = 0;
+    return;
+    setActive(false);
+
     slideshowTab->set_label("Slideshow");
     slideTitle->set_label("");
     showLoading();
@@ -180,135 +201,135 @@ namespace GUI {
       stop();
       slideSlideshow->set_image(*slideSlideshowPlay);
     }
-}
-
-
-void SlideshowWidget::run() {
-
-  if (!slideshowStarted) {
-    slideshowStarted = true;
-    // plan cyclic update
-    updateTimeout = Glib::signal_timeout().connect(
-            sigc::mem_fun(*this, &SlideshowWidget::slideLeft), slideshowSlideshowTimeout);
   }
-}
 
 
-void SlideshowWidget::stop() {
-  if (slideshowStarted) {
-    slideshowStarted = false;
+  void SlideshowWidget::run() {
+
+    if (!slideshowStarted) {
+      slideshowStarted = true;
+      // plan cyclic update
+      updateTimeout = Glib::signal_timeout().connect(
+              sigc::mem_fun(*this, &SlideshowWidget::slideLeft), slideshowSlideshowTimeout);
+    }
   }
-}
 
 
-bool SlideshowWidget::slideLeft() {
-  if (slideshowStarted) {
-    on_next();
-    return true;
-  } else {
+  void SlideshowWidget::stop() {
+    if (slideshowStarted) {
+      slideshowStarted = false;
+    }
+  }
+
+
+  bool SlideshowWidget::slideLeft() {
+    if (slideshowStarted) {
+      on_next();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  void SlideshowWidget::on_next() {
+    if (it->second == NULL) return;
+    it++;
+    currentPosition++;
+
+    if (it == slideList->end()) it = slideList->begin();
+
+    showSlide(it->second);
+  }
+
+
+  void SlideshowWidget::on_prev() {
+    if (it->second == NULL) return;
+    if (it == slideList->begin()) it = slideList->end();
+    it--;
+    if (currentPosition == 0) currentPosition = slideList->size();
+    currentPosition--;
+
+    showSlide(it->second);
+
+  }
+
+
+  bool SlideshowWidget::on_expose(GdkEvent * e) {
+    slideWidth = slideEventBox->get_width();
+    slideHeight = slideEventBox->get_height();
+
     return false;
   }
-}
 
 
-void SlideshowWidget::on_next() {
-  if (it->second == NULL) return;
-  it++;
-  currentPosition++;
+  void SlideshowWidget::rightFeedback() {
+    if (it->second == NULL) return;
 
-  if (it == slideList->end()) it = slideList->begin();
+    if (!it->second->canIVote()) return;
+    it->second->voteRight();
+    checkIfICanVote();
 
-  showSlide(it->second);
-}
+    // set current slide as right
+    currentArtist->addAsRight(it->second->img->title);
+    currentArtist->addAsRight(it->second->img->alt);
+    currentArtist->addAsRight(it->second->img->context);
 
-
-void SlideshowWidget::on_prev() {
-  if (it->second == NULL) return;
-  if (it == slideList->begin()) it = slideList->end();
-  it--;
-  if (currentPosition == 0) currentPosition = slideList->size();
-  currentPosition--;
-
-  showSlide(it->second);
-
-}
-
-
-bool SlideshowWidget::on_expose(GdkEvent * e) {
-  slideWidth = slideEventBox->get_width();
-  slideHeight = slideEventBox->get_height();
-
-  return false;
-}
-
-
-void SlideshowWidget::rightFeedback() {
-  if (it->second == NULL) return;
-
-  if (!it->second->canIVote()) return;
-  it->second->voteRight();
-  checkIfICanVote();
-
-  // set current slide as right
-  currentArtist->addAsRight(it->second->img->title);
-  currentArtist->addAsRight(it->second->img->alt);
-  currentArtist->addAsRight(it->second->img->context);
-
-  // reclassificate all data
-  currentArtist->classificateArtist();
-  // detect new class of object
-  checkClassOfObject(it->second);
-}
-
-
-void SlideshowWidget::wrongFeedback() {
-  if (it->second == NULL) return;
-
-  if (!it->second->canIVote()) return;
-  it->second->voteWrong();
-  checkIfICanVote();
-
-  currentArtist->addAsWrong(it->second->img->title);
-  currentArtist->addAsWrong(it->second->img->alt);
-  currentArtist->addAsWrong(it->second->img->context);
-
-  // reclassificate all data
-  currentArtist->classificateArtist();
-  // detect new class of object
-  checkClassOfObject(it->second);
-}
-
-
-void SlideshowWidget::checkIfICanVote() {
-  if (it->second == NULL) return;
-
-  if (it->second->canIVote()) {
-    slideRight->set_sensitive(true);
-    slideWrong->set_sensitive(true);
-  } else {
-    slideRight->set_sensitive(false);
-    slideWrong->set_sensitive(false);
+    // reclassificate all data
+    currentArtist->classificateArtist();
+    // detect new class of object
+    checkClassOfObject(it->second);
   }
-}
 
 
-void SlideshowWidget::checkClassOfObject(SSlide * s) {
-  if (s->objectclass == NaiveBayes::firstClass) {
-    slideClass->set_from_icon_name("gtk-yes", Gtk::ICON_SIZE_SMALL_TOOLBAR);
-  } else if (s->objectclass == NaiveBayes::secondClass) {
-    slideClass->set_from_icon_name("gtk-close", Gtk::ICON_SIZE_SMALL_TOOLBAR);
-  } else {
-    slideClass->set_from_icon_name("gtk-help", Gtk::ICON_SIZE_SMALL_TOOLBAR);
+  void SlideshowWidget::wrongFeedback() {
+    if (it->second == NULL) return;
+
+    if (!it->second->canIVote()) return;
+    it->second->voteWrong();
+    checkIfICanVote();
+
+    currentArtist->addAsWrong(it->second->img->title);
+    currentArtist->addAsWrong(it->second->img->alt);
+    currentArtist->addAsWrong(it->second->img->context);
+
+    // reclassificate all data
+    currentArtist->classificateArtist();
+    // detect new class of object
+    checkClassOfObject(it->second);
   }
-}
 
 
-bool SlideshowWidget::on_slideshowScroll(GdkEventScroll * s) {
+  void SlideshowWidget::checkIfICanVote() {
+    if (it->second == NULL) return;
 
-  if (s->direction == GDK_SCROLL_DOWN) {
-    on_next();
-  } else if (s->direction == GDK_SCROLL_UP) {
-    on_prev();
+    if (it->second->canIVote()) {
+      slideRight->set_sensitive(true);
+      slideWrong->set_sensitive(true);
+    } else {
+      slideRight->set_sensitive(false);
+      slideWrong->set_sensitive(false);
+    }
   }
-}
+
+
+  void SlideshowWidget::checkClassOfObject(SSlide * s) {
+    if (s->objectclass == NaiveBayes::firstClass) {
+      slideClass->set_from_icon_name("gtk-yes", Gtk::ICON_SIZE_SMALL_TOOLBAR);
+    } else if (s->objectclass == NaiveBayes::secondClass) {
+      slideClass->set_from_icon_name("gtk-close", Gtk::ICON_SIZE_SMALL_TOOLBAR);
+    } else {
+      slideClass->set_from_icon_name("gtk-help", Gtk::ICON_SIZE_SMALL_TOOLBAR);
+    }
+  }
+
+
+  bool SlideshowWidget::on_slideshowScroll(GdkEventScroll * s) {
+
+    if (s->direction == GDK_SCROLL_DOWN) {
+      on_next();
+    } else if (s->direction == GDK_SCROLL_UP) {
+      on_prev();
+    }
+  }
 }

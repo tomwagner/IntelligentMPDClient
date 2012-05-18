@@ -497,7 +497,6 @@
                     <child>
                       <object class="GtkCheckMenuItem" id="showControlsWidget">
                         <property name="use_action_appearance">False</property>
-                        <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label">Control Widget</property>
                         <property name="active">True</property>
@@ -506,7 +505,6 @@
                     <child>
                       <object class="GtkCheckMenuItem" id="showTextWidget">
                         <property name="use_action_appearance">False</property>
-                        <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label">Text Widget</property>
                         <property name="active">True</property>
@@ -515,7 +513,6 @@
                     <child>
                       <object class="GtkCheckMenuItem" id="showYoutubeWidget">
                         <property name="use_action_appearance">False</property>
-                        <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label">Youtube Widget</property>
                         <property name="active">True</property>
@@ -524,7 +521,6 @@
                     <child>
                       <object class="GtkCheckMenuItem" id="showSlideshowWidget">
                         <property name="use_action_appearance">False</property>
-                        <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label">Slideshow Widget</property>
                         <property name="active">True</property>
@@ -533,7 +529,6 @@
                     <child>
                       <object class="GtkSeparatorMenuItem" id="separatormenuitem2">
                         <property name="use_action_appearance">False</property>
-                        <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
                     </child>
@@ -583,6 +578,21 @@
                         <property name="always_show_image">True</property>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem" id="separatormenuitem4">
+                        <property name="use_action_appearance">False</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkCheckMenuItem" id="remoteSync">
+                        <property name="use_action_appearance">False</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label">Enable remote storage sync.</property>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
@@ -621,32 +631,20 @@
           </packing>
         </child>
         <child>
+          <placeholder/>
+        </child>
+        <child>
           <object class="GtkLabel" id="songLabel">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can_focus">True</property>
             <property name="halign">start</property>
             <property name="xalign">0</property>
             <property name="xpad">5</property>
             <property name="wrap">True</property>
-            <property name="selectable">True</property>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkStatusbar" id="statusBar">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
-            <property name="spacing">2</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
             <property name="position">2</property>
           </packing>
         </child>
@@ -687,7 +685,7 @@
                     <property name="width_request">10</property>
                     <property name="height_request">10</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
+                    <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
                     <property name="has_tooltip">True</property>
                     <property name="use_action_appearance">False</property>
@@ -776,6 +774,8 @@ audio-volume-medium</property>
                           <object class="GtkImage" id="playImage">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="has_focus">True</property>
+                            <property name="is_focus">True</property>
                             <property name="stock">gtk-media-play</property>
                           </object>
                         </child>
@@ -1003,6 +1003,33 @@ audio-volume-medium</property>
                   <packing>
                     <property name="x">5</property>
                     <property name="y">210</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="enableAgents">
+                    <property name="use_action_appearance">False</property>
+                    <property name="width_request">80</property>
+                    <property name="height_request">30</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="use_action_appearance">False</property>
+                  </object>
+                  <packing>
+                    <property name="x">100</property>
+                    <property name="y">320</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label6">
+                    <property name="width_request">100</property>
+                    <property name="height_request">20</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Run Agents:</property>
+                  </object>
+                  <packing>
+                    <property name="x">5</property>
+                    <property name="y">325</property>
                   </packing>
                 </child>
               </object>
@@ -1589,6 +1616,7 @@ audio-volume-medium</property>
                                     <property name="xalign">0</property>
                                     <property name="wrap">True</property>
                                     <property name="selectable">True</property>
+                                    <property name="ellipsize">end</property>
                                     <attributes>
                                       <attribute name="font-desc" value="Sans Bold 15"/>
                                     </attributes>
@@ -2333,6 +2361,20 @@ audio-volume-medium</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkStatusbar" id="statusBar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">2</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
             <property name="position">4</property>
           </packing>
         </child>

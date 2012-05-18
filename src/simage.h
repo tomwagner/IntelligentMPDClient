@@ -30,6 +30,7 @@
 #include "stext.h"
 #include "sfeedback.h"
 #include "http.h"
+
 #include "clientsettings.h"
 #include <gtkmm.h>
 

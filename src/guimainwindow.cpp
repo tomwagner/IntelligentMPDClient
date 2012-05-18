@@ -25,10 +25,12 @@
 #include "guimainwindow.h"
 //#include <cairomm/cairomm.h>
 
-Gtk::Main * kit = new Gtk::Main();
-GUI::MainWindow * gui = new GUI::MainWindow();
+
+//GUI::MainWindow * gui = new GUI::MainWindow();
 
 namespace GUI {
+
+  MainWindow* MainWindow::instance = NULL;
 
 
   MainWindow::MainWindow() {
@@ -63,6 +65,19 @@ namespace GUI {
     builder->get_widget("fullscreen", fullscreen);
     builder->get_widget("sourceSettings", sourceSettings);
     builder->get_widget("progSettings", progSettings);
+    builder->get_widget("remoteSync", remoteSync);
+    if (Config::GetInstance()->isRemoteStorageEnabled()) {
+      remoteSync->set_active(true);
+    }
+    builder->get_widget("enableAgents", enableAgents);
+    Glib::RefPtr<Gtk::Action> a = Gtk::ToggleAction::create();
+
+    a->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::setAgentSwitch));
+    enableAgents->set_related_action(a);
+    
+    if (Config::GetInstance()->isAgentsEnabled()) {
+      enableAgents->set_active(true);
+    }
     builder->get_widget("about", about);
 
 
@@ -152,6 +167,9 @@ namespace GUI {
 
     progSettings->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::showSettingsWindow));
 
+    remoteSync->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::setRemoteSync));
+
+
     connect->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_connect));
     disconnect->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_disconnect));
     info->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_info_mpd));
@@ -187,14 +205,13 @@ namespace GUI {
     volumeScale->signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::setVolume));
 
 
-    clientMPD.UpdateStatus();
+    MPD::Client::GetInstance()->UpdateStatus();
 
     // article widget
     articlesWidget = new ArticlesWidget(builder);
 
     // slideshow widget
     slideshowWidget = new SlideshowWidget(builder);
-    //    slideshowWidget->setSlideshowWidget(slideList);
     slideshowWidget->showLoading();
 
 
@@ -271,6 +288,25 @@ namespace GUI {
   }
 
 
+  void MainWindow::setRemoteSync() {
+    if (remoteSync->get_active()) {
+      Config::GetInstance()->setRemoteStorageEnabled(true);
+    } else {
+      Config::GetInstance()->setRemoteStorageEnabled(false);
+    }
+  }
+
+
+  void MainWindow::setAgentSwitch() {
+    std::cout << "state" << std::endl;
+    if (enableAgents->get_active()) {
+      Config::GetInstance()->setAgentsEnabled(true);
+    } else {
+      Config::GetInstance()->setAgentsEnabled(false);
+    }
+  }
+
+
   void MainWindow::showErrorDialog(std::string text) {
     // if window is not realized, we accumulate dialogs
     if (!mainWindow->get_realized()) {
@@ -327,22 +363,22 @@ namespace GUI {
     showDialogs();
 
     // update client status
-    clientMPD.UpdateStatus();
+    MPD::Client::GetInstance()->UpdateStatus();
 
-    if (clientMPD.Connected()) {
-      MPD::PlayerState s = clientMPD.GetState();
+    if (MPD::Client::GetInstance()->Connected()) {
+      MPD::PlayerState s = MPD::Client::GetInstance()->GetState();
 
       if (s == MPD::psPlay) {
         play->set_active(true);
         play->set_image(*pauseImage);
 
         // update time scale widget
-        setTimeScale(clientMPD.GetElapsedTime(), clientMPD.GetTotalTime());
+        setTimeScale(MPD::Client::GetInstance()->GetElapsedTime(), MPD::Client::GetInstance()->GetTotalTime());
 
         // we set default volume
-        volumeScale->set_value(clientMPD.GetVolume());
+        volumeScale->set_value(MPD::Client::GetInstance()->GetVolume());
 
-        MPD::Song song = clientMPD.GetCurrentSong();
+        MPD::Song song = MPD::Client::GetInstance()->GetCurrentSong();
         if (!song.Empty()) {
           // update text widgets
           setAlbum(song.GetAlbum());
@@ -353,15 +389,16 @@ namespace GUI {
         }
 
         std::stringstream bitrate;
-        bitrate << clientMPD.GetBitrate();
+        bitrate << MPD::Client::GetInstance()->GetBitrate();
         bitrate << " kbit/s";
 
         songBitrate->set_text(bitrate.str());
 
         // load new info to widgets
+        //        std::cout << "updateArticlesWidget()" << std::endl;
         articlesWidget->updateArticlesWidget();
         slideshowWidget->updateSlideshowWidget();
-//        coverWidget->updateCoverWidget();
+        //        coverWidget->updateCoverWidget();
 
         //        Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_file("ui/bg_test2.jpg");
         //        p = p->add_alpha(1, 0, 255, 0);
@@ -373,7 +410,7 @@ namespace GUI {
       } else if (s == MPD::psStop) {
         on_stop();
       }
-      return true;
+      //      return true;
     }
   }
 
@@ -468,19 +505,19 @@ namespace GUI {
 
 
   void MainWindow::on_back() {
-    clientMPD.Prev();
+    MPD::Client::GetInstance()->Prev();
   }
 
 
   void MainWindow::on_playOrPause() {
 
     if (play->get_active()) {
-      clientMPD.Play();
+      MPD::Client::GetInstance()->Play();
       //      play->set_active(true);
       play->set_image(*pauseImage);
 
     } else {
-      clientMPD.Pause(true);
+      MPD::Client::GetInstance()->Pause(true);
       //      play->set_active(false);
       play->set_image(*playImage);
       setStatusBar(_("IMPC Paused"));
@@ -489,10 +526,10 @@ namespace GUI {
 
 
   void MainWindow::on_stop() {
-    clientMPD.Stop();
+    MPD::Client::GetInstance()->Stop();
     if (play->get_active()) {
 
-      clientMPD.Pause(true);
+      MPD::Client::GetInstance()->Pause(true);
 
       // set play icon
       play->set_active(false);
@@ -510,13 +547,13 @@ namespace GUI {
 
 
   void MainWindow::on_next() {
-    clientMPD.Next();
+    MPD::Client::GetInstance()->Next();
   }
 
 
   void MainWindow::on_connect() {
 
-    clientMPD.Connect();
+    MPD::Client::GetInstance()->Connect();
 
     //set sensitive on controls
     first->set_sensitive(true);
@@ -529,7 +566,7 @@ namespace GUI {
     timeScale->set_sensitive(true);
 
 
-    if (clientMPD.Connected()) {
+    if (MPD::Client::GetInstance()->Connected()) {
       setStatusBar(_("IMPC Connected"));
     }
 
@@ -549,32 +586,32 @@ namespace GUI {
 
     setStatusBar(_("IMPC Disconnected"));
 
-    clientMPD.Disconnect();
+    MPD::Client::GetInstance()->Disconnect();
   }
 
 
   void MainWindow::on_update_mpd_db() {
-    clientMPD.UpdateDirectory("");
+    MPD::Client::GetInstance()->UpdateDirectory("");
   }
 
 
   void MainWindow::on_info_mpd() {
     //    MPD::TagList l;
-    //    clientMPD.GetList
+    //    MPD::Client::GetInstance()->GetList
   }
 
 
   void MainWindow::setVolume(double vol) {
-    clientMPD.SetVolume(vol);
+    MPD::Client::GetInstance()->SetVolume(vol);
   }
 
 
   bool MainWindow::setTime(GdkEventButton * e) {
 
-    if (clientMPD.isPlaying()) {
-      double fraction = e->x / timeScale->get_width() * clientMPD.GetTotalTime();
-      clientMPD.Seek(fraction);
-      setTimeScale(fraction, clientMPD.GetTotalTime());
+    if (MPD::Client::GetInstance()->isPlaying()) {
+      double fraction = e->x / timeScale->get_width() * MPD::Client::GetInstance()->GetTotalTime();
+      MPD::Client::GetInstance()->Seek(fraction);
+      setTimeScale(fraction, MPD::Client::GetInstance()->GetTotalTime());
     }
     return true;
   }
@@ -582,7 +619,7 @@ namespace GUI {
 
   void MainWindow::setTimeScale(double elapsedTime, double totalTime) {
     timeScale->set_fraction(elapsedTime / totalTime);
-    timeScale->set_text(clientMPD.GetCurrentSong().GetLength(elapsedTime) + " / " + clientMPD.GetCurrentSong().GetLength(totalTime));
+    timeScale->set_text(MPD::Client::GetInstance()->GetCurrentSong().GetLength(elapsedTime) + " / " + MPD::Client::GetInstance()->GetCurrentSong().GetLength(totalTime));
   }
 
 
@@ -610,14 +647,14 @@ namespace GUI {
 
 
   void MainWindow::on_first() {
-    clientMPD.PlayID(0);
+    MPD::Client::GetInstance()->PlayID(0);
   }
 
 
   void MainWindow::on_last() {
-    if (clientMPD.GetPlaylistLength() == 0) return;
+    if (MPD::Client::GetInstance()->GetPlaylistLength() == 0) return;
 
-    clientMPD.PlayID(clientMPD.GetPlaylistLength());
+    MPD::Client::GetInstance()->PlayID(MPD::Client::GetInstance()->GetPlaylistLength());
   }
 
 

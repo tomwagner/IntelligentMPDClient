@@ -33,20 +33,22 @@
 
 
 namespace DataStorage {
-
-  Storage storage = Storage();
+  Storage* Storage::instance = NULL;
 
 
   Storage::Storage() : filePath(""), http(new HTTP) {
+    sleep(1);
 #if DEBUG
     std::cout << "storage vytvořen" << std::endl;
 #endif
 
-    localStorageDir = "tmp/";
-    remoteStorageURL = "http://www.impc.cz/api/";
+    localStorageDir = Config::GetInstance()->getTempPath();
+    //    remoteStorageURL = "http://www.impc.cz/api/";
+    remoteStorageURL = "http://dip.seo-wagner.cz";
 
     currentArtist = new SArtist;
-    currentTrack = new STrack;
+
+//    loadWidgets();
   }
 
 
@@ -57,41 +59,60 @@ namespace DataStorage {
     // save current file
     currentArtist->saveArtist(filePath);
 
+    if (Config::GetInstance()->isRemoteStorageEnabled()) {
+      // save to shared storage
+      if (remoteSaveArtist(filePath)) {
+        currentArtist->setSynced(true);
+      } else {
+        currentArtist->setSynced(false);
+      }
 
-    // save to shared storage
-    if (remoteSaveArtist(filePath)) {
-      currentArtist->setSynced(true);
-    } else {
-      currentArtist->setSynced(false);
+
+      // save with sync flags
+      currentArtist->saveArtist(filePath);
     }
-    
-    
-    // save with sync flags
-    currentArtist->saveArtist(filePath);
-
-    delete currentTrack;
     delete currentArtist;
     delete http;
   }
 
 
-  void Storage::loadNewSong(MPD::Song s) {
+  void Storage::loadWidgets() {
 
+    //    GUI::MainWindow::GetInstance()->articlesWidget->clearArticlesWidget();
+
+    // set pointers to GUI
+    GUI::MainWindow::GetInstance()->articlesWidget->setArticlesWidget(currentArtist);
+    GUI::MainWindow::GetInstance()->slideshowWidget->setSlideshowWidget(currentArtist);
+
+    std::map<std::string, std::map<std::string, SAlbum*>* >::iterator it;
+
+    it = currentArtist->albums.find(currentArtist->album.getHash());
+    if (it != currentArtist->albums.end()) {
+      GUI::MainWindow::GetInstance()->coverWidget->setCoverWidget((*it).second);
+    } else {
+      // current album not found, create new map for album images
+      std::map<std::string, SAlbum *>* m = new std::map<std::string, SAlbum *>;
+      currentArtist->albums.insert(std::pair<std::string, std::map<std::string, SAlbum*>* >(currentArtist->album.getHash(), m));
+      GUI::MainWindow::GetInstance()->coverWidget->setCoverWidget(&*m);
+    }
+  }
+
+
+  void Storage::loadNewSong(MPD::Song s) {
     // save current file
     currentArtist->saveArtist(filePath);
 
+    if (Config::GetInstance()->isRemoteStorageEnabled()) {
+      // save to shared storage
+      if (remoteSaveArtist(filePath)) {
+        currentArtist->setSynced(true);
+      } else {
+        currentArtist->setSynced(false);
+      }
 
-    // save to shared storage
-    if (remoteSaveArtist(filePath)) {
-      currentArtist->setSynced(true);
-    } else {
-      currentArtist->setSynced(false);
+      // save with sync flags
+      currentArtist->saveArtist(filePath);
     }
-    
-    
-    // save with sync flags
-    currentArtist->saveArtist(filePath);
-
 
     // clear current Artist
     currentArtist->clear();
@@ -103,30 +124,19 @@ namespace DataStorage {
     currentArtist->name.set(s.GetArtist());
     currentArtist->album.set(s.GetAlbum());
 
-    // remote load artist
-    std::string remoteArtistContent = remoteLoadArtist(s.GetArtist());
-    currentArtist->loadArtistFromContent(remoteArtistContent);
+    // if is enabled remote sharing, share
+    if (Config::GetInstance()->isRemoteStorageEnabled()) {
+      // remote load artist
+      std::string remoteArtistContent = remoteLoadArtist(s.GetArtist());
+      currentArtist->loadArtistFromContent(remoteArtistContent);
+    }
 
     // check if file exists
     // search in local temp
     currentArtist->loadArtistFromFile(filePath);
 
-
-    // set pointers to GUI
-    gui->articlesWidget->setArticlesWidget(currentArtist);
-    gui->slideshowWidget->setSlideshowWidget(currentArtist);
-
-    std::map<std::string, std::map<std::string, SAlbum*>* >::iterator it;
-
-    it = currentArtist->albums.find(currentArtist->album.getHash());
-    if (it != currentArtist->albums.end()) {
-      gui->coverWidget->setCoverWidget((*it).second);
-    } else {
-      // current album not found, create new map for album images
-      std::map<std::string, SAlbum *>* m = new std::map<std::string, SAlbum *>;
-      currentArtist->albums.insert(std::pair<std::string, std::map<std::string, SAlbum*>* >(currentArtist->album.getHash(), m));
-      gui->coverWidget->setCoverWidget(&*m);
-    }
+    
+    loadWidgets();
   }
 
 
@@ -180,6 +190,9 @@ namespace DataStorage {
       std::cerr << "Input exception:" << e.what() << std::endl;
       return false;
     }
+#if DEBUG
+    std::cout << "saved result:" << output << std::endl;
+#endif
     return true;
   }
 

@@ -26,7 +26,7 @@
 
 #ifndef MAINWINDOW_H
 #define	MAINWINDOW_H
-
+#include "clientsettings.h"
 #include <gtkmm-3.0/gtkmm.h>
 #include <gtkmm-3.0/gtkmm/volumebutton.h>
 #include <glibmm/fileutils.h>
@@ -41,7 +41,8 @@
 #include "guislideshowwidget.h"
 #include "guiartistswidget.h"
 #include "guicoverwidget.h"
-#include "clientsettings.h"
+
+
 
 #include <stack>
 namespace GUI {
@@ -52,11 +53,22 @@ namespace GUI {
   } Dialog;
 
   class MainWindow {
+  private:
+    static MainWindow * instance;
+
   public:
-    MainWindow();
+
+    static MainWindow * GetInstance() {
+      if (instance == NULL) {
+        instance = new MainWindow();
+      }
+      return instance;
+    }
+
     virtual ~MainWindow();
-
-
+  private:
+    MainWindow();
+  public:
     void setAlbumCover(std::string filepath);
     void setAlbumCover(const Glib::RefPtr<Gdk::Pixbuf> p);
     void setSongLabel(std::string name);
@@ -89,6 +101,10 @@ namespace GUI {
     // settings windo
     void showSettingsWindow();
 
+    // remote sync settings
+    void setRemoteSync();
+
+
     // about dialog
     void showAboutDialog();
 
@@ -111,7 +127,6 @@ namespace GUI {
     // gui dialogs notification
 
     std::stack<Dialog> dialogs;
-
 
     sigc::connection updateTimeout;
 
@@ -147,6 +162,7 @@ namespace GUI {
     Gtk::CheckMenuItem * fullscreen;
     Gtk::ImageMenuItem * sourceSettings;
     Gtk::ImageMenuItem * progSettings;
+    Gtk::CheckMenuItem * remoteSync;
     Gtk::ImageMenuItem * about;
 
 
@@ -167,6 +183,9 @@ namespace GUI {
     Gtk::Button * last;
 
     Gtk::Image * playIcon;
+
+    void setAgentSwitch();
+    Gtk::Switch * enableAgents;
 
 
     // artist widget
@@ -213,7 +232,6 @@ namespace GUI {
     void on_info_mpd();
   };
 }
-extern Gtk::Main * kit;
-extern GUI::MainWindow * gui;
+
 #endif	/* GUI_H */
 

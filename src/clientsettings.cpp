@@ -28,42 +28,41 @@
 #include <cassert>
 #define DEBUG 0
 
-ClientSettings * clientSettings = new ClientSettings;
-
-
+Config* Config::instance = NULL;
 
 const std::string DEFAULTHOME = "/.impc/";
 
 
-ClientSettings::ClientSettings() :
+Config::Config() :
 m_host("localhost"),
 m_port(6600),
 m_password(""),
 m_confPath(""),
 m_tempPath(""),
 m_home(""),
-DEFAULTCONFIGFILEPATH(""),
-DEFAULTSOURCESFILEPATH("") {
+m_remoteStorage(false),
+m_enabledAgents(false) {
+#if DEBUG
+  std::cout << "clientSettings created" << std::endl;
+#endif
 
-  // set home folder (ends with /)
-//  m_home += getenv("HOME");
-//  m_home += "/.impc/";
+  settingsFilename = "settings.json";
+  sourceFilename = "sources.json";
 
   // set config and temp path
-  m_confPath = m_home + "config/"; 
+  m_confPath = m_home + "config/";
   m_tempPath = m_home + "tmp/";
 
-
-  // set config files
-  DEFAULTCONFIGFILEPATH = m_home + "config/settings.json";
-  DEFAULTSOURCESFILEPATH = m_home + "config/sources.json";
-  
   // load client settings
-  loadClientSettings();
+  loadConfig();
+
 }
 
 
-ClientSettings::~ClientSettings() {
+Config::~Config() {
+#if DEBUG
+  std::cout << "clientSettings destucted" << std::endl;
+#endif
   // save before exit
   save();
 
@@ -72,71 +71,84 @@ ClientSettings::~ClientSettings() {
 }
 
 
-void ClientSettings::setHost(std::string host) {
+void Config::setHost(std::string host) {
   m_host = host;
 }
 
 
-void ClientSettings::setPort(int port) {
+void Config::setPort(int port) {
   m_port = port;
 }
 
 
-void ClientSettings::setPassword(std::string password) {
+void Config::setPassword(std::string password) {
   m_password = password;
 }
 
 
-void ClientSettings::setConfPath(std::string path) {
-  m_confPath = path;
-}
-
-
-void ClientSettings::setTempPath(std::string path) {
+void Config::setTempPath(std::string path) {
   m_tempPath = path;
 }
 
 
-std::string ClientSettings::getHost() const {
+void Config::setRemoteStorageEnabled(bool b) {
+  m_remoteStorage = b;
+}
+
+
+bool Config::isRemoteStorageEnabled() {
+  return m_remoteStorage;
+}
+
+
+void Config::setAgentsEnabled(bool b) {
+  m_enabledAgents = b;
+}
+
+
+bool Config::isAgentsEnabled() {
+  return m_enabledAgents;
+}
+
+
+std::string Config::getHost() const {
   return m_host;
 }
 
 
-int ClientSettings::getPort() const {
+int Config::getPort() const {
   return m_port;
 }
 
 
-std::string ClientSettings::getPassword() const {
+std::string Config::getPassword() const {
   return m_password;
 }
 
 
-std::string ClientSettings::getConfPath() const {
-  return m_confPath;
-}
-
-
-std::string ClientSettings::getTempPath() const {
+std::string Config::getTempPath() const {
   return m_tempPath;
 }
 
 
-void ClientSettings::loadSettings() {
+void Config::loadSettings() {
   Json::Value root;
   Json::Reader reader;
 
   std::string content;
   std::string line;
-  std::ifstream in(DEFAULTCONFIGFILEPATH.c_str());
+
+  std::ifstream in((m_confPath + settingsFilename).c_str());
   while (std::getline(in, line))
     content += line;
   in.close();
 
   bool parsingSuccessful = reader.parse(content, root);
 
+  if (content.empty()) return;
   if (!parsingSuccessful) {
     std::cout << "Error in parsing settings.json file" << reader.getFormatedErrorMessages();
+    return;
   }
 
   // projdeme všechny položky a uložíme nastavení do objektu
@@ -146,21 +158,23 @@ void ClientSettings::loadSettings() {
     m_host = settings["host"].asString();
     m_port = settings["port"].asInt();
     m_password = settings["password"].asString();
-//    m_confPath = settings["confPath"].asString();
-//    m_tempPath = settings["tempPath"].asString();
-  }
 
+    m_tempPath = settings["tempPath"].asString();
+
+    m_remoteStorage = settings["remote"].asBool();
+    m_enabledAgents = settings["enabledAgents"].asBool();
+  }
 }
 
 
-void ClientSettings::saveSettings() {
+void Config::saveSettings() {
   Json::Value root;
   Json::Value row;
   Json::StyledWriter writer;
-  std::ofstream of(DEFAULTCONFIGFILEPATH.c_str());
+  std::ofstream of((m_confPath + settingsFilename).c_str());
 
   if (!of.is_open()) {
-    std::cerr << "Cannot open settings file for saving." << std::endl;
+    std::cerr << "Cannot open " + settingsFilename + " for saving." << std::endl;
   }
 
 
@@ -170,8 +184,8 @@ void ClientSettings::saveSettings() {
   row["password"] = m_password;
 
   row["tempPath"] = m_tempPath;
-  row["confPath"] = m_confPath;
-
+  row["remote"] = m_remoteStorage;
+  row["enabledAgents"] = m_enabledAgents;
 
   root["settings"] = row;
 
@@ -187,13 +201,13 @@ void ClientSettings::saveSettings() {
 }
 
 
-void ClientSettings::loadSources() {
+void Config::loadSources() {
   Json::Value root;
   Json::Reader reader;
 
   std::string content;
   std::string line;
-  std::ifstream in(DEFAULTSOURCESFILEPATH.c_str());
+  std::ifstream in((m_confPath + sourceFilename).c_str());
   while (std::getline(in, line))
     content += line;
   in.close();
@@ -201,8 +215,9 @@ void ClientSettings::loadSources() {
 
   bool parsingSuccessful = reader.parse(content, root);
 
+  if (content.empty()) return;
   if (!parsingSuccessful) {
-    std::cout << "Error in parsing sources.json file" << reader.getFormatedErrorMessages();
+    std::cout << "Error in parsing " + sourceFilename + " file" << reader.getFormatedErrorMessages();
   }
 
   // projdeme všechny zdroje a uložíme nastavení do widgetu
@@ -223,15 +238,15 @@ void ClientSettings::loadSources() {
 }
 
 
-void ClientSettings::saveSources() {
+void Config::saveSources() {
 
   Json::Value root;
   Json::Value row;
   Json::StyledWriter writer;
-  std::ofstream of(DEFAULTSOURCESFILEPATH.c_str());
+  std::ofstream of((m_confPath + sourceFilename).c_str());
 
   if (!of.is_open()) {
-    std::cerr << "Cannot open source file for saving." << std::endl;
+    std::cerr << "Cannot open " + sourceFilename + " file for saving." << std::endl;
     return;
   }
 
@@ -254,7 +269,7 @@ void ClientSettings::saveSources() {
 }
 
 
-void ClientSettings::loadClientSettings() {
+void Config::loadConfig() {
   // načtu nastavení programu        
   loadSettings();
   // načtu zdroje
@@ -263,7 +278,7 @@ void ClientSettings::loadClientSettings() {
 }
 
 
-void ClientSettings::save() {
+void Config::save() {
   //uložím nastavení
   saveSettings();
   // uložím zdroje
@@ -272,7 +287,7 @@ void ClientSettings::save() {
 }
 
 
-void ClientSettings::initSourcesList() {
+void Config::initSourcesList() {
   std::list<source*>::iterator it;
   for (it = sourcesList.begin(); it != sourcesList.end(); it++) {
     delete *it;
@@ -281,12 +296,12 @@ void ClientSettings::initSourcesList() {
 }
 
 
-std::list<source*>& ClientSettings::getSourcesList() {
+std::list<source*>& Config::getSourcesList() {
   return sourcesList;
 }
 
 
-void ClientSettings::insertSource(bool active, std::string url) {
+void Config::insertSource(bool active, std::string url) {
   source * row = new source;
   row->active = active;
   row->url = url;
