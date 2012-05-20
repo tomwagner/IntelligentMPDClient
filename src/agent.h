@@ -57,6 +57,15 @@ public:
 
 
 private:
+  //tests
+  unsigned webpageCount;
+  unsigned acceptedImageCount;
+  unsigned imageCount;
+  unsigned textCount;
+  unsigned acceptedTextCount;
+  unsigned acceptedCount;
+  unsigned removedTextCount;
+  unsigned removedImageCount;
   Thread * t;
   utils::HTTP * http;
   hashwrapper * hashWrapper;
@@ -116,7 +125,7 @@ private:
   std::string getDomain(const std::string& url);
 
   bool checkAcceptedDomain(std::string url);
-  };
+};
 
 #endif	/* AGENT_H */
 

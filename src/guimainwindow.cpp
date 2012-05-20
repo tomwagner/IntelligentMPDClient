@@ -298,7 +298,6 @@ namespace GUI {
 
 
   void MainWindow::setAgentSwitch() {
-    std::cout << "state" << std::endl;
     if (enableAgents->get_active()) {
       Config::GetInstance()->setAgentsEnabled(true);
     } else {

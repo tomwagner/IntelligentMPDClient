@@ -32,6 +32,7 @@
 #define DEBUG 0
 
 
+
 namespace DataStorage {
   Storage* Storage::instance = NULL;
 
@@ -43,11 +44,11 @@ namespace DataStorage {
 #endif
 
     localStorageDir = Config::GetInstance()->getTempPath();
-        remoteStorageURL = "http://www.impc.cz/api/";
+    remoteStorageURL = "http://www.impc.cz/api/";
 
     currentArtist = new SArtist;
 
-//    loadWidgets();
+    //    loadWidgets();
   }
 
 
@@ -134,7 +135,7 @@ namespace DataStorage {
     // search in local temp
     currentArtist->loadArtistFromFile(filePath);
 
-    
+
     loadWidgets();
   }
 

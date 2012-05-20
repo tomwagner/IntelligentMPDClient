@@ -25,7 +25,8 @@
 
 #include "agent.h"
 
-#define DEBUG 1
+#define DEBUG 0
+#define TESTING 0
 
 
 Agent::Agent(std::string url, MPD::Song s) :
@@ -38,6 +39,17 @@ permission(true) {
 
 #if DEBUG
   std::cout << "Spuštěn Agent: " << baseUrl << std::endl;
+#endif
+
+#if TESTING
+  webpageCount = 0;
+  imageCount = 0;
+  textCount = 0;
+  acceptedCount = 0;
+  acceptedTextCount = 0;
+  acceptedImageCount = 0;
+  removedImageCount = 0;
+  removedTextCount = 0;
 #endif
 
   // create HTTP object
@@ -58,6 +70,17 @@ permission(true) {
 Agent::~Agent() {
 #if DEBUG
   std::cout << "agent dest." << std::endl;
+#endif
+
+#if TESTING
+  std::cout << "webpageCount: " << webpageCount << std::endl;
+  std::cout << "acceptedImageCount: " << acceptedImageCount << std::endl;
+  std::cout << "imageCount: " << imageCount << std::endl;
+  std::cout << "textCount: " << textCount << std::endl;
+  std::cout << "acceptedTextCount: " << acceptedTextCount << std::endl;
+  std::cout << "acceptedCount: " << acceptedCount << std::endl;
+  std::cout << "removedTextCount: " << removedTextCount << std::endl;
+  std::cout << "removedImageCount: " << removedImageCount << std::endl;
 #endif
   // stop agent
   stop();
@@ -228,22 +251,24 @@ void Agent::run() {
 
     // get images
     std::list<imgPair> imgList = search->getImgList();
-
+#if DEBUG
     std::cout << "imgs " << imgList.size() << std::endl;
-
+#endif
     // save images
     saveImageList(imgList);
 
 
     // get image link list (imgs with link)
     std::list<linkPair*> imgLinkList = search->getImgLinkList();
-
+#if DEBUG
     std::cout << "img link list: " << imgLinkList.size() << std::endl;
-
+#endif
     std::list<linkPair*>::iterator it;
 
     for (it = imgLinkList.begin(); it != imgLinkList.end(); it++) {
+#if DEBUG
       std::cout << "img map insert: " << (*it)->url << std::endl;
+#endif
       insertUrlIntoMap(imageMap, (*it)->url, false);
     }
 
@@ -259,7 +284,9 @@ void Agent::run() {
      ******************************/
     // get link list with artist title
     std::list<linkPair *> linkList = search->getLinkList(currentArtist);
-    std::cout << "nalezeno ve vyhledávání" << linkList.size() << std::endl;
+#if DEBUG
+    std::cout << "arist found in search: " << linkList.size() << std::endl;
+#endif
     for (it = linkList.begin(); it != linkList.end(); it++) {
 
       // if url not contains base domain, continue
@@ -275,13 +302,13 @@ void Agent::run() {
       if (w == NULL) continue;
 
       // get paragraphs
-      std::list<article *> parList = w->getParagraphList(currentArtist);
+      std::list<article *> parList = w->getParagraphList();
 
       //save paragraphs
       saveArticles(parList);
 
       // get albums
-      std::list<imgPair> albList = w->getImgList(currentAlbum);
+      std::list<imgPair> albList = w->getImgList();
 
       // save albums
       saveAlbumList(albList);
@@ -352,7 +379,9 @@ void Agent::saveArticles(std::list<article *> articleList) {
 
   std::list<article *>::iterator p;
   for (p = articleList.begin(); p != articleList.end(); p++) {
-
+#if TESTING
+    textCount++;
+#endif
     // min chars in paragraph condition
     if ((*p)->text.length() < minCharsInParagraph) continue;
 
@@ -374,9 +403,17 @@ void Agent::saveArticles(std::list<article *> articleList) {
       case NaiveBayes::firstClass:
       case NaiveBayes::unknownClass:
         Storage::GetInstance()->currentArtist->saveArticle(a);
+#if TESTING
+        acceptedTextCount++;
+        std::cout << "accepted text" << a->text->getText() << std::endl;
+#endif
         break;
       case NaiveBayes::secondClass:
         // article is not related
+#if TESTING
+        removedTextCount++;
+        std::cout << "removed text" << a->text->getText() << std::endl;
+#endif
         delete a;
         break;
       default:
@@ -451,6 +488,10 @@ void Agent::saveImageList(std::list<imgPair> imgList) {
   std::list<imgPair>::iterator i;
   for (i = imgList.begin(); i != imgList.end(); i++) {
 
+#if TESTING
+    imageCount++;
+#endif
+
     //#if DEBUG
     //    std::cout << "saveImageList Alt:" << (*i).alt << "Img:" << absoluteUrl((*i).url) << std::endl;
     //    std::cout << "saveImageList Content:" << (*i).context << "Title:" << absoluteUrl((*i).title) << std::endl;
@@ -493,8 +534,16 @@ void Agent::saveImageList(std::list<imgPair> imgList) {
       case NaiveBayes::firstClass:
       case NaiveBayes::unknownClass:
         Storage::GetInstance()->currentArtist->saveImage(a);
+#if TESTING
+        acceptedImageCount++;
+        std::cout << "accepted image" << a->img->getUrl()->getText() << std::endl;
+#endif
         break;
       case NaiveBayes::secondClass:
+#if TESTING
+        removedImageCount++;
+        std::cout << "removed image" << a->img->getUrl()->getText() << std::endl;
+#endif
         // image is not related
         delete a;
         break;
@@ -526,9 +575,9 @@ void Agent::browseImageMap() {
 
       // get images contains artist
       std::list<imgPair> imgList = w->getImgList(currentArtist);
-
+#if DEBUG
       std::cout << "browseImageMap: " << absoluteUrl((*i).second.url) << "imgs:" << imgList.size() << std::endl;
-
+#endif
       // get albums
       std::list<imgPair> albList = w->getImgList(currentAlbum);
 
@@ -540,9 +589,9 @@ void Agent::browseImageMap() {
 
       // get images contains albums
       imgList = w->getImgList(currentAlbum);
-
+#if DEBUG
       std::cout << "browseImageMap: " << absoluteUrl((*i).second.url) << "imgs:" << imgList.size() << std::endl;
-
+#endif
       // save images
       saveImageList(imgList);
 
@@ -602,6 +651,10 @@ bool Agent::isVisited(std::string url) {
 
 Webpage * Agent::getWebpage(std::string url) throw (ClientException) {
   std::string sourceHTML;
+
+#if TESTING
+  webpageCount++;
+#endif
 
   if (!permission) {
     ClientException e("Agent: Running interrupted.");
@@ -794,7 +847,6 @@ parsedUrl Agent::parseUrl(const std::string & url_s) {
 std::string Agent::getDomain(const std::string & url) {
   parsedUrl u = parseUrl(url);
 
-
   return u.domain_;
 }
 
@@ -814,8 +866,10 @@ bool Agent::checkAcceptedDomain(std::string url) {
   // if agent domain is search engine, we search in all webpages
   if (utils::ci_stringContains(baseDomain, "google")) return true;
   if (utils::ci_stringContains(baseDomain, "seznam")) return true;
+  if (utils::ci_stringContains(baseDomain, "bing")) return true;
+  if (utils::ci_stringContains(baseDomain, "yahoo")) return true;
   // else we search only in baseDomain
-  if (utils::ci_stringContains(absoluteUrl(url), baseDomain)) true;
+  if (utils::ci_stringContains(absoluteUrl(url), baseDomain)) return true;
 #if DEBUG
   std::cout << "accepted domain:" << baseDomain << " " << absoluteUrl(url) << "false" << std::endl;
 #endif  
