@@ -501,11 +501,11 @@ void Webpage::parseParagraphList() {
 
   std::string s;
 
-  xmlNodePtr node = screenNodes->nodeTab[0]->children;
-
-  if (screenNodes == NULL) return ;
+  if (screenNodes == NULL) return;
   if (screenNodes->nodeTab == NULL) return;
   if (screenNodes->nodeTab[0] == NULL) return;
+
+  xmlNodePtr node = screenNodes->nodeTab[0]->children;
 
   pomArticle = new article;
   while (node != NULL) {
