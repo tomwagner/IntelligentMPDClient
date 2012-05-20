@@ -435,7 +435,7 @@ std::string Webpage::getH1() {
   xmlNodeSetPtr screenNodes = screenXPathObj->nodesetval;
 
   if (screenNodes == NULL) return h1;
-  
+
   if (screenNodes->nodeTab != NULL) {
     // we are estimate more H1 headers (concatenate them)
     for (int j = 0; j < screenNodes->nodeNr; j++) {
@@ -501,9 +501,11 @@ void Webpage::parseParagraphList() {
 
   std::string s;
 
-  //  if (screenXPathObj == NULL) return h1; 
-
   xmlNodePtr node = screenNodes->nodeTab[0]->children;
+
+  if (screenNodes == NULL) return ;
+  if (screenNodes->nodeTab == NULL) return;
+  if (screenNodes->nodeTab[0] == NULL) return;
 
   pomArticle = new article;
   while (node != NULL) {
@@ -881,9 +883,9 @@ void Webpage::parseImgList() {
   // projdeme všechny img prvky v html souboru
   xmlXPathObjectPtr screenXPathObj = xmlXPathEvalExpression(BAD_CAST "//body//img[@src[contains(.,'.jpg') or contains(.,'.JPG') or contains(.,'.jpeg') or contains(.,'.JEPG')]]", xpathCtx);
   xmlNodeSetPtr screenNodes = screenXPathObj->nodesetval;
-  
+
   if (screenNodes == NULL) return;
-  
+
   for (int j = 0; j < screenNodes->nodeNr; j++) {
 
     imgPair i;
@@ -949,9 +951,9 @@ void Webpage::parseImgList() {
   //  we add hypertext links to images
   screenXPathObj = xmlXPathEvalExpression(BAD_CAST "//body//a[@href[contains(.,'.jpg') or contains(.,'.JPG') or contains(.,'.jpeg') or contains(.,'.JEPG')]]", xpathCtx);
   screenNodes = screenXPathObj->nodesetval;
-  
+
   if (screenNodes == NULL) return;
-  
+
   for (int j = 0; j < screenNodes->nodeNr; j++) {
     //    printf("Obrázky %s\n", screenNodes->nodeTab[j]->name);
     imgPair i;
@@ -1187,9 +1189,9 @@ void Webpage::findLinkTextFromImgTitles(xmlNode * node, std::string & imgTitle) 
 void Webpage::parseLinkList() {
   xmlXPathObjectPtr screenXPathObj = xmlXPathEvalExpression(BAD_CAST "//@href[normalize-space(.) and not(contains(.,'.jpg'))]", xpathCtx); //not(contains(.,'.png'))
   xmlNodeSetPtr screenNodes = screenXPathObj->nodesetval;
-  
+
   if (screenNodes == NULL) return;
-  
+
   for (int j = 0; j < screenNodes->nodeNr; j++) {
 
     // chceme pouze prvky typu a - odkazy
@@ -1208,7 +1210,7 @@ void Webpage::parseLinkList() {
 
       // remove white spaces
       linkText = utils::removeMultipleWhiteSpaces(linkText);
-      
+
       // trim
       linkText = utils::trim(linkText);
 
