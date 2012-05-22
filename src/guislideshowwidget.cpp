@@ -160,7 +160,7 @@ namespace GUI {
 
   void SlideshowWidget::clearSlide() {
     currentPosition = 0;
-    return;
+
     setActive(false);
 
     slideshowTab->set_label("Slideshow");

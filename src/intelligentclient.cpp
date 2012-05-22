@@ -26,7 +26,7 @@
 #include "intelligentclient.h"
 #include <cassert>
 
-#define DEBUG 1
+#define DEBUG 0
 #define ENABLE_GUI 1
 
 
@@ -43,7 +43,8 @@ void updatePlayer(MPD::Client *, MPD::StatusChanges changed, void *) {
       // set song parameters to storage
       Storage::GetInstance()->loadNewSong(song);
 
-      AgentManager::GetInstance()->runAgents();
+      // run agents
+      AgentManager::GetInstance()->songChanged();
 
       // set text widgets
       GUI::MainWindow::GetInstance()->setSongLabel(song.GetArtist() + " - " + song.GetTitle());
@@ -52,22 +53,58 @@ void updatePlayer(MPD::Client *, MPD::StatusChanges changed, void *) {
       GUI::MainWindow::GetInstance()->setAlbum(song.GetAlbum());
       GUI::MainWindow::GetInstance()->setGenre(song.GetGenre());
       GUI::MainWindow::GetInstance()->setTimeScale(MPD::Client::GetInstance()->GetElapsedTime(), MPD::Client::GetInstance()->GetTotalTime());
-      GUI::MainWindow::GetInstance()->setStatusBar(_("IMPC Playing: ") + song.GetFile());
-    }
-  } else if (changed.ElapsedTime) {
-    if (!Config::GetInstance()->isAgentsEnabled()){
-      AgentManager::GetInstance()->killAgents();
     }
   }
+  if (changed.ElapsedTime) {
+
+//    if (!Config::GetInstance()->isAgentsEnabled()) {
+//      AgentManager::GetInstance()->killAgents();
+//    }
+//
+//    AgentManager::GetInstance()->isSourcesChanged();
+    AgentManager::GetInstance()->checkIfAgentsEnabled();
 
 
+    // load new info to widgets
+    GUI::MainWindow::GetInstance()->articlesWidget->updateArticlesWidget();
+    GUI::MainWindow::GetInstance()->slideshowWidget->updateSlideshowWidget();
+//    GUI::MainWindow::GetInstance()->coverWidget->updateCoverWidget();
 
+
+    GUI::MainWindow::GetInstance()->setTimeScale(MPD::Client::GetInstance()->GetElapsedTime(), MPD::Client::GetInstance()->GetTotalTime());
+
+    if (MPD::Client::GetInstance()->isPlaying()) {
+      MPD::Song song = MPD::Client::GetInstance()->GetCurrentSong();
+
+      GUI::MainWindow::GetInstance()->setSongLabel(song.GetArtist() + " - " + song.GetTitle());
+
+      GUI::MainWindow::GetInstance()->setStatusBar(_("IMPC Playing: ") + song.GetFile());
+    }
+  }
+  if (changed.PlayerState) {
+
+    MPD::PlayerState s = MPD::Client::GetInstance()->GetState();
+
+    if (s == MPD::psPlay) {
+      GUI::MainWindow::GetInstance()->on_play();
+      GUI::MainWindow::GetInstance()->setPlayButtonActive(true);
+
+      // we set default volume
+      GUI::MainWindow::GetInstance()->setVolume((double) MPD::Client::GetInstance()->GetVolume());
+
+      GUI::MainWindow::GetInstance()->setBitrate(MPD::Client::GetInstance()->GetBitrate());
+
+    } else if (s == MPD::psPause) {
+      GUI::MainWindow::GetInstance()->on_pause();
+      GUI::MainWindow::GetInstance()->setPlayButtonActive(false);
+    } else if (s == MPD::psStop) {
+      GUI::MainWindow::GetInstance()->on_stop();
+    }
+  }
 }
 
 
-IntelligentClient::IntelligentClient(int argc, char** argv) {
-  std::cout << "ic" << std::endl;
-
+IntelligentClient::IntelligentClient(int argc, char** argv) : isTimeout(false) {
   // connect to MPD server
   MPD::Client::GetInstance()->SetHostname(Config::GetInstance()->getHost());
   MPD::Client::GetInstance()->SetPassword(Config::GetInstance()->getPassword());
@@ -84,6 +121,8 @@ IntelligentClient::IntelligentClient(int argc, char** argv) {
     GUI::MainWindow::GetInstance()->showErrorDialog(_("Error in connecting to MPD"));
   }
 
+  runTimer();
+
 #if ENABLE_GUI
   // run main window
   kit.run(*GUI::MainWindow::GetInstance()->getWindow());
@@ -92,6 +131,7 @@ IntelligentClient::IntelligentClient(int argc, char** argv) {
 
 
 IntelligentClient::~IntelligentClient() {
+  stopTimer();
 
 #if ENABLE_GUI
   delete GUI::MainWindow::GetInstance();
@@ -104,7 +144,24 @@ IntelligentClient::~IntelligentClient() {
 
 
 bool IntelligentClient::updateStatus() {
-  MPD::Client::GetInstance()->UpdateStatus();
+  if (MPD::Client::GetInstance()->Connected())
+    MPD::Client::GetInstance()->UpdateStatus();
+
   return true;
 }
 
+
+void IntelligentClient::runTimer() {
+  if (isTimeout == true) return;
+
+  updateTimeout = Glib::signal_timeout().connect(
+          sigc::mem_fun(*this, &IntelligentClient::updateStatus), 1000);
+
+  isTimeout = true;
+}
+
+
+void IntelligentClient::stopTimer() {
+  isTimeout = false;
+
+}

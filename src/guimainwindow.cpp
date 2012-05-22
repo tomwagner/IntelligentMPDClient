@@ -25,8 +25,8 @@
 #include "guimainwindow.h"
 //#include <cairomm/cairomm.h>
 
+#define DEBUG 0
 
-//GUI::MainWindow * gui = new GUI::MainWindow();
 
 namespace GUI {
 
@@ -34,8 +34,9 @@ namespace GUI {
 
 
   MainWindow::MainWindow() {
+#if DEBUG
     std::cout << "GUI constructor" << std::endl;
-
+#endif
     // set default icon settings
     Glib::RefPtr<Gtk::Settings> settings = Gtk::Settings::get_default();
     settings->property_gtk_button_images() = true;
@@ -74,7 +75,7 @@ namespace GUI {
 
     a->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::setAgentSwitch));
     enableAgents->set_related_action(a);
-    
+
     if (Config::GetInstance()->isAgentsEnabled()) {
       enableAgents->set_active(true);
     }
@@ -122,9 +123,9 @@ namespace GUI {
     Glib::RefPtr<Gdk::Pixbuf> iconAbout = Gdk::Pixbuf::create_from_file("ui/icon.png", 128, 128, true);
     aboutDialog->set_logo(iconAbout);
 
-
+    quit->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_quit));
     about->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::showAboutDialog));
-    //    aboutDialog->signal_button_press_event()->connect(sigc::mem_fun(*this, &MainWindow::quit));
+//    aboutDialog->signal_button_press_event().connect(sigc::mem_fun(*this, &MainWindow::on_quit));
     // vytvoříme status iconu
     if (Glib::file_test("ui/icon.png", Glib::FILE_TEST_EXISTS)) {
       Glib::RefPtr<Gtk::StatusIcon> trayIcon = Gtk::StatusIcon::create_from_file("ui/icon.png");
@@ -141,7 +142,6 @@ namespace GUI {
 
 
     //Cairo
-
     //mainWindow->signal_event().connect(sigc::mem_fun(*this, &MainWindow::onExposeEvent));
 
 
@@ -205,7 +205,7 @@ namespace GUI {
     volumeScale->signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::setVolume));
 
 
-    MPD::Client::GetInstance()->UpdateStatus();
+//    MPD::Client::GetInstance()->UpdateStatus();
 
     // article widget
     articlesWidget = new ArticlesWidget(builder);
@@ -221,20 +221,30 @@ namespace GUI {
 
     // cover widget
     coverWidget = new CoverWidget(builder);
+    
+    showDialogs();
 
     // update player
-    updateGUI();
-    // plan cyclic update fo 500 mili seconds
-    updateTimeout = Glib::signal_timeout().connect(
-            sigc::mem_fun(*this, &MainWindow::updateGUI), 1000);
+    //    updateGUI();
+    //    // plan cyclic update fo 500 mili seconds
+    //    updateTimeout = Glib::signal_timeout().connect(
+    //            sigc::mem_fun(*this, &MainWindow::updateGUI), 1000);
   }
 
 
   MainWindow::~MainWindow() {
+#if DEBUG
+    std::cout << "GUI destructor" << std::endl;
+#endif
+    //delete windows
+    delete sourcesWindow;
+    delete settingsWindow;
+
     // delete widgets
     delete articlesWidget;
     delete slideshowWidget;
     delete artistsWidget;
+    delete coverWidget;
   }
 
 
@@ -356,62 +366,62 @@ namespace GUI {
   /**
    * Method to update GUI. We call it every one second.
    */
-  bool MainWindow::updateGUI() {
-
-    // we show accumulated dialogs
-    showDialogs();
-
-    // update client status
-    MPD::Client::GetInstance()->UpdateStatus();
-
-    if (MPD::Client::GetInstance()->Connected()) {
-      MPD::PlayerState s = MPD::Client::GetInstance()->GetState();
-
-      if (s == MPD::psPlay) {
-        play->set_active(true);
-        play->set_image(*pauseImage);
-
-        // update time scale widget
-        setTimeScale(MPD::Client::GetInstance()->GetElapsedTime(), MPD::Client::GetInstance()->GetTotalTime());
-
-        // we set default volume
-        volumeScale->set_value(MPD::Client::GetInstance()->GetVolume());
-
-        MPD::Song song = MPD::Client::GetInstance()->GetCurrentSong();
-        if (!song.Empty()) {
-          // update text widgets
-          setAlbum(song.GetAlbum());
-          setArtist(song.GetArtist());
-          setSongLabel(song.GetArtist() + " - " + song.GetTitle());
-          setGenre(song.GetGenre());
-          setTitle(song.GetTitle());
-        }
-
-        std::stringstream bitrate;
-        bitrate << MPD::Client::GetInstance()->GetBitrate();
-        bitrate << " kbit/s";
-
-        songBitrate->set_text(bitrate.str());
-
-        // load new info to widgets
-        //        std::cout << "updateArticlesWidget()" << std::endl;
-        articlesWidget->updateArticlesWidget();
-        slideshowWidget->updateSlideshowWidget();
-        //        coverWidget->updateCoverWidget();
-
-        //        Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_file("ui/bg_test2.jpg");
-        //        p = p->add_alpha(1, 0, 255, 0);
-        //p = p->scale_simple(100,100,Gdk::INTERP_BILINEAR);
-
-      } else if (s == MPD::psPause) {
-        play->set_active(false);
-        play->set_image(*playImage);
-      } else if (s == MPD::psStop) {
-        on_stop();
-      }
-      //      return true;
-    }
-  }
+//  bool MainWindow::updateGUI() {
+//
+//    // we show accumulated dialogs
+//    showDialogs();
+//
+//    // update client status
+//    MPD::Client::GetInstance()->UpdateStatus();
+//
+//    if (MPD::Client::GetInstance()->Connected()) {
+//      MPD::PlayerState s = MPD::Client::GetInstance()->GetState();
+//
+//      if (s == MPD::psPlay) {
+//        play->set_active(true);
+//        play->set_image(*pauseImage);
+//
+//        // update time scale widget
+//        setTimeScale(MPD::Client::GetInstance()->GetElapsedTime(), MPD::Client::GetInstance()->GetTotalTime());
+//
+//        // we set default volume
+//        volumeScale->set_value(MPD::Client::GetInstance()->GetVolume());
+//
+//        MPD::Song song = MPD::Client::GetInstance()->GetCurrentSong();
+//        if (!song.Empty()) {
+//          // update text widgets
+//          setAlbum(song.GetAlbum());
+//          setArtist(song.GetArtist());
+//          setSongLabel(song.GetArtist() + " - " + song.GetTitle());
+//          setGenre(song.GetGenre());
+//          setTitle(song.GetTitle());
+//        }
+//
+//        std::stringstream bitrate;
+//        bitrate << MPD::Client::GetInstance()->GetBitrate();
+//        bitrate << " kbit/s";
+//
+//        songBitrate->set_text(bitrate.str());
+//
+//        // load new info to widgets
+//        //        std::cout << "updateArticlesWidget()" << std::endl;
+//        articlesWidget->updateArticlesWidget();
+//        slideshowWidget->updateSlideshowWidget();
+//        //        coverWidget->updateCoverWidget();
+//
+//        //        Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_file("ui/bg_test2.jpg");
+//        //        p = p->add_alpha(1, 0, 255, 0);
+//        //p = p->scale_simple(100,100,Gdk::INTERP_BILINEAR);
+//
+//      } else if (s == MPD::psPause) {
+//        play->set_active(false);
+//        play->set_image(*playImage);
+//      } else if (s == MPD::psStop) {
+//        on_stop();
+//      }
+//      //      return true;
+//    }
+//  }
 
 
   Gtk::Window * MainWindow::getWindow() const {
@@ -508,24 +518,38 @@ namespace GUI {
   }
 
 
+  void MainWindow::on_play() {
+    play->set_image(*pauseImage);
+  }
+
+
+  void MainWindow::on_pause() {
+    play->set_image(*playImage);
+  }
+
+
+  void MainWindow::setPlayButtonActive(bool b) {
+    play->set_active(b);
+  }
+
+
   void MainWindow::on_playOrPause() {
 
     if (play->get_active()) {
       MPD::Client::GetInstance()->Play();
-      //      play->set_active(true);
-      play->set_image(*pauseImage);
-
+      on_play();
     } else {
       MPD::Client::GetInstance()->Pause(true);
-      //      play->set_active(false);
-      play->set_image(*playImage);
+      on_pause();
       setStatusBar(_("IMPC Paused"));
     }
   }
 
 
   void MainWindow::on_stop() {
+    // send stop to client
     MPD::Client::GetInstance()->Stop();
+
     if (play->get_active()) {
 
       MPD::Client::GetInstance()->Pause(true);
@@ -534,12 +558,15 @@ namespace GUI {
       play->set_active(false);
       play->set_image(*playImage);
     }
+    setSongLabel("");
     setAlbum("");
     setArtist("");
     setBitrate("");
     setGenre("");
     setTimeScale(0, 0);
     setTitle("");
+     
+    
 
     setStatusBar(_("IMPC Stopped"));
   }
@@ -654,6 +681,20 @@ namespace GUI {
     if (MPD::Client::GetInstance()->GetPlaylistLength() == 0) return;
 
     MPD::Client::GetInstance()->PlayID(MPD::Client::GetInstance()->GetPlaylistLength());
+  }
+
+
+  void MainWindow::setBitrate(unsigned bitsps) {
+    std::stringstream bitrate;
+    bitrate << bitsps;
+    bitrate << " kbit/s";
+
+    setBitrate(bitrate.str());
+  }
+
+
+  void MainWindow::on_quit() {
+    Gtk::Main::quit();
   }
 
 

@@ -64,7 +64,6 @@ namespace GUI {
 
 
   void CoverWidget::updateCoverWidget() {
-
     if (coverList == NULL) return;
     if (!coverList->empty()) {
       if (currentPosition == 0)

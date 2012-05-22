@@ -75,13 +75,14 @@ namespace GUI {
     void setArtist(std::string name);
     void setTitle(std::string name);
     void setGenre(std::string name);
+    void setBitrate(unsigned bits);
     void setBitrate(std::string length);
     void setAlbum(std::string name);
     void setWebpage(std::string markupWebpage);
 
 
     void setStatusBar(std::string text);
-    bool updateGUI();
+//    bool updateGUI();
     void updatePlayer0(MPD::Client *, MPD::StatusChanges changed, void *);
     Gtk::Window * getWindow() const;
 
@@ -114,7 +115,6 @@ namespace GUI {
 
     // control widget
     void setVolume(double vol);
-    //    void setTime(double time);
 
     bool setTime(GdkEventButton * button);
     void setTimeScale(double elapsedTime, double totalTime);
@@ -211,20 +211,26 @@ namespace GUI {
     Gtk::AboutDialog * aboutDialog;
     Gtk::ButtonBox * aboutDialogClose;
 
-    // okno sources
+    // sources window
     Gtk::Window * sourcesWindow;
     Gtk::Box * sourcesList;
 
-    // okno settings
+    // settings window
     Gtk::Window * settingsWindow;
 
     // events
     void on_first();
     void on_back();
     void on_playOrPause();
+  public:
+    void on_play();
+    void setPlayButtonActive(bool b);
+    void on_pause();
     void on_stop();
+  protected:
     void on_next();
     void on_last();
+    void on_quit();
 
     void on_connect();
     void on_disconnect();

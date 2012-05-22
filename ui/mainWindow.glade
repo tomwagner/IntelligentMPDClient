@@ -1651,6 +1651,7 @@ audio-volume-medium</property>
                                             <property name="xpad">5</property>
                                             <property name="ypad">10</property>
                                             <property name="wrap">True</property>
+                                            <property name="wrap_mode">char</property>
                                             <property name="selectable">True</property>
                                           </object>
                                         </child>

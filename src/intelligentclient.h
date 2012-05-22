@@ -34,10 +34,18 @@ class IntelligentClient {
 public:
   IntelligentClient(int argc, char** argv);
   virtual ~IntelligentClient();
- 
+
+  void runTimer();
+  void stopTimer();
+
 private:
   bool updateStatus();
   Gtk::Main kit;
+  
+  bool isTimeout;
+  sigc::connection updateTimeout;
+
+
 
 };
 

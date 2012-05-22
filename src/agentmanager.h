@@ -42,18 +42,22 @@ public:
     }
     return instance;
   }
-  void runAgents();
-  void killAgents();
+
+  void songChanged();
+  void isSourcesChanged();
+  bool checkIfAgentsEnabled();
 
   virtual ~AgentManager();
+
 private:
   AgentManager(bool);
-
-
-
-private:
+  unsigned m_sourcesCount;
+  bool m_agentsEnabled;
   bool m_disabled;
   xmlMutexPtr mutex;
+
+  void runAgents();
+  void killAgents();
 
   std::list<source*> sourcesList;
   std::list<Agent *> agentList;

@@ -46,6 +46,7 @@ namespace DataStorage {
     localStorageDir = Config::GetInstance()->getTempPath();
     remoteStorageURL = "http://www.impc.cz/api/";
 
+
     currentArtist = new SArtist;
 
     //    loadWidgets();
@@ -71,6 +72,7 @@ namespace DataStorage {
       // save with sync flags
       currentArtist->saveArtist(filePath);
     }
+    
     delete currentArtist;
     delete http;
   }

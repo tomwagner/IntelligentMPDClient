@@ -25,7 +25,7 @@
 
 #include "agent.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #define TESTING 0
 
 
@@ -188,6 +188,10 @@ void Agent::run() {
     /** if we not found search form */
     if (searchForms.size() == 0) {
       std::list<linkPair *> linkList = main->getLinkList(currentArtist);
+      if (linkList.empty()) {
+        // if list is empty, try all links
+        linkList = main->getLinkList();
+      }
       std::list<linkPair *>::iterator it;
 
       for (it = linkList.begin(); it != linkList.end(); it++) {
@@ -316,22 +320,25 @@ void Agent::run() {
 
       // get images
       std::list<imgPair> imgList = w->getImgList();
-
+#if DEBUG
       std::cout << "imgs" << imgList.size() << std::endl;
-
+#endif
       // save images
       saveImageList(imgList);
 
 
       // get image link list (imgs with link)
       std::list<linkPair*> imgLinkList = w->getImgLinkList();
-
+#if DEBUG
       std::cout << "img link list: " << imgLinkList.size() << std::endl;
+#endif
 
       std::list<linkPair*>::iterator it;
 
       for (it = imgLinkList.begin(); it != imgLinkList.end(); it++) {
+#if DEBUG
         std::cout << "img map insert: " << (*it)->url << std::endl;
+#endif
         insertUrlIntoMap(imageMap, (*it)->url, false);
       }
 
@@ -636,7 +643,9 @@ bool Agent::isVisited(std::string url) {
 
     // check the date when we last visit
     if ((std::time(0)-(*found).second.time < 86400) && ((*found).second.visited == true)) {
-      std::cout << "we visited page yesterday, skip" << std::endl;
+#if DEBUG
+      std::cout << "visited page, skip" << std::endl;
+#endif
       return true;
     }
   }

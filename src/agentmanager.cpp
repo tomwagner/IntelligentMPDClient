@@ -30,9 +30,12 @@
 AgentManager* AgentManager::instance = NULL;
 
 
-AgentManager::AgentManager(bool status) : m_disabled(status) {
+AgentManager::AgentManager(bool status) : m_disabled(status),
+m_sourcesCount(0) {
   // init parser
   xmlInitParser();
+
+  m_agentsEnabled = Config::GetInstance()->isAgentsEnabled();
 }
 
 
@@ -43,13 +46,53 @@ AgentManager::~AgentManager() {
   xmlCleanupParser();
 }
 
+/**
+ * Method checks if agents enabled
+ * @return 
+ */
+bool AgentManager::checkIfAgentsEnabled() {
+  if (Config::GetInstance()->isAgentsEnabled()) {
+    if (m_agentsEnabled == false) {
+      m_agentsEnabled = true;
+      if (!agentList.empty()) killAgents();
+      runAgents();
+    }
 
-void AgentManager::runAgents() {
+    return true;
+  } else {
+    if (m_agentsEnabled == true) {
+      m_agentsEnabled = false;
+      killAgents();
+    }
+    return false;
+  }
+}
 
-  if (!Config::GetInstance()->isAgentsEnabled()) return;
 
+void AgentManager::songChanged() {
   // if there is running agents, we kill them
   if (!agentList.empty()) killAgents();
+
+  runAgents();
+}
+
+
+void AgentManager::isSourcesChanged() {
+  if (!m_agentsEnabled) return;
+
+  unsigned sourcesCount = sourcesList.size();
+
+  // if number of sources no changed return
+  if (m_sourcesCount != sourcesCount) {
+    killAgents();
+    runAgents();
+    m_sourcesCount = sourcesCount;
+  }
+}
+
+
+void AgentManager::runAgents() {
+  if (!m_agentsEnabled) return;
 
   // load sources list
   sourcesList = Config::GetInstance()->getSourcesList();
