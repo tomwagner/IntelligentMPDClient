@@ -86,18 +86,18 @@ namespace DataStorage {
   }
 
 
-  ClassificatorResult SArtist::classificate(std::string s) {
+  std::pair<ClassificatorResult, float> SArtist::classificate(std::string s) {
     Index * unknown = new Index;
     unknown->add(s);
 
-    ClassificatorResult result = classificate(unknown);
+    std::pair<ClassificatorResult, float> result = classificate(unknown);
     delete unknown;
 
     return result;
   }
 
 
-  ClassificatorResult SArtist::classificate(Index * item) {
+  std::pair<ClassificatorResult, float> SArtist::classificate(Index * item) {
     return m_classificator->classificate(m_right, m_wrong, item);
   }
 
@@ -125,7 +125,98 @@ namespace DataStorage {
   }
 
 
-  void SArtist::loadArtistFromContent(std::string& content) {
+  void SArtist::loadArtistFromRemoteContent(std::string& content) {
+    Json::Value root;
+    Json::Reader reader;
+
+    // if file is empty, do nothing
+    if (content.empty()) return;
+
+    // parse JSON file
+    bool parsingSuccessful = reader.parse(content, root);
+
+    if (!parsingSuccessful) {
+      std::cout << "Storage: Error in parsing input file" << reader.getFormatedErrorMessages();
+    }
+
+    Json::Value artist = root["artist"];
+
+    // load settings to object variables
+
+    // load articles
+    if (artist.isMember("articles")) {
+
+      const Json::Value articlesJSON = artist["articles"];
+
+      std::map<std::string, SArticle *>::iterator found;
+      for (int index = 0; index < articlesJSON.size(); ++index) {
+        SArticle * a = new SArticle;
+        a->loadArticle(articlesJSON[index]);
+
+
+
+        if ((found = articles.find(a->text->getHash())) != articles.end()) {
+          // update numbers of counts
+          if ((*found).second->isSynced()) {
+            (*found).second->setNumOfRight(a->getNumOfRight());
+            (*found).second->setNumOfWrong(a->getNumOfWrong());
+          } else {
+            (*found).second->setNumOfRight(a->getNumOfRight() + (int) (*found).second->isVotedRight());
+            (*found).second->setNumOfWrong(a->getNumOfWrong() + (int) (*found).second->isVotedWrong());
+          }
+
+          delete a;
+          continue;
+        }
+
+        saveArticle(a);
+      }
+    }
+
+
+
+    // load images
+    if (artist.isMember("images")) {
+
+      const Json::Value imagesJSON = artist["images"];
+
+      std::map<std::string, SSlide *>::iterator found;
+      for (int index = 0; index < imagesJSON.size(); ++index) {
+        SSlide * s = new SSlide;
+        s->loadSlide(imagesJSON[index]);
+
+        // if img doesnt exists in cache, we cant import it
+        if (!s->img->isImage()) {
+          delete s;
+          continue;
+        }
+
+        if ((found = images.find(s->img->getHash())) != images.end()) {
+          // update numbers of counts
+          if ((*found).second->isSynced()) {
+            (*found).second->setNumOfRight(s->getNumOfRight());
+            (*found).second->setNumOfWrong(s->getNumOfWrong());
+          } else {
+            (*found).second->setNumOfRight(s->getNumOfRight() + (int) (*found).second->isVotedRight());
+            (*found).second->setNumOfWrong(s->getNumOfWrong() + (int) (*found).second->isVotedWrong());
+          }
+
+          delete s;
+          continue;
+        }
+
+        saveImage(s);
+      }
+    }
+    if (artist.isMember("maps")) {
+      maps = artist["maps"];
+    }
+    // after load, classificate other data
+    classificateArtist();
+  }
+
+
+  void SArtist::loadArtistFromContent(std::string & content) {
     Json::Value root;
     Json::Reader reader;
 
@@ -152,20 +243,6 @@ namespace DataStorage {
         SArticle * a = new SArticle;
         a->loadArticle(articles[index]);
 
-        // learn classificator 
-        FeedbackResult r = a->isRight();
-
-        switch (r) {
-          case rightClass:
-            m_right->add(a->text->getText());
-            break;
-          case wrongClass:
-            m_wrong->add(a->text->getText());
-            break;
-          default:
-            break;
-        }
-
         saveArticle(a);
       }
     }
@@ -180,23 +257,6 @@ namespace DataStorage {
           SAlbum * al = new SAlbum;
           al->loadAlbum(albmus[it.key().asString()][index]);
 
-          // learn classificator 
-          FeedbackResult r = al->isRight();
-
-          switch (r) {
-            case rightClass:
-              m_right->add(al->img->title);
-              m_right->add(al->img->alt);
-              m_right->add(al->img->context);
-              break;
-            case wrongClass:
-              m_wrong->add(al->img->title);
-              m_wrong->add(al->img->alt);
-              m_wrong->add(al->img->context);
-              break;
-            default:
-              break;
-          }
           saveAlbum(al);
         }
       }
@@ -217,23 +277,6 @@ namespace DataStorage {
           continue;
         }
 
-        FeedbackResult r = s->isRight();
-
-        switch (r) {
-          case rightClass:
-            m_right->add(s->img->title);
-            m_right->add(s->img->alt);
-            m_right->add(s->img->context);
-            break;
-          case wrongClass:
-            m_wrong->add(s->img->title);
-            m_wrong->add(s->img->alt);
-            m_wrong->add(s->img->context);
-            break;
-          default:
-            break;
-        }
-
         saveImage(s);
       }
     }
@@ -241,17 +284,63 @@ namespace DataStorage {
       maps = artist["maps"];
     }
     // after load, classificate other data
-    classificateArtist();
+    //    classificateArtist();
   }
 
 
-  void SArtist::addAsRight(std::string& s) {
+  void SArtist::addAsRight(std::string & s) {
     m_right->add(s);
   }
 
 
-  void SArtist::addAsWrong(std::string& s) {
+  void SArtist::addAsWrong(std::string & s) {
     m_wrong->add(s);
+  }
+
+
+  void SArtist::loadClassificator() {
+    // load articles
+    std::map<std::string, SArticle *>::iterator it;
+    for (it = articles.begin(); it != articles.end(); it++) {
+
+      FeedbackResult r = (*it).second->isRight();
+
+      switch (r) {
+        case rightClass:
+          m_right->add((*it).second->title->getText());
+          m_right->add((*it).second->text->getText());
+          break;
+        case wrongClass:
+          m_wrong->add((*it).second->title->getText());
+          m_wrong->add((*it).second->text->getText());
+          break;
+        default:
+          break;
+      }
+    }
+
+
+    // load images
+    std::map<std::string, SSlide *>::iterator itI;
+    for (itI = images.begin(); itI != images.end(); itI++) {
+
+      FeedbackResult r = (*itI).second->isRight();
+
+      switch (r) {
+        case rightClass:
+          m_right->add((*itI).second->img->title);
+          m_right->add((*itI).second->img->alt);
+          m_right->add((*itI).second->img->context);
+          break;
+        case wrongClass:
+          m_wrong->add((*itI).second->img->title);
+          m_wrong->add((*itI).second->img->alt);
+          m_wrong->add((*itI).second->img->context);
+          break;
+        default:
+          break;
+      }
+    }
   }
 
 
@@ -259,14 +348,16 @@ namespace DataStorage {
     // classificate articles
     std::map<std::string, SArticle *>::iterator it;
     for (it = articles.begin(); it != articles.end(); it++) {
-      (*it).second->objectclass = classificate((*it).second->title->getText() + " " + (*it).second->text->getText());
+      (*it).second->objectclass = classificate((*it).second->title->getText() + " " + (*it).second->text->getText()).first;
+      (*it).second->relevance = classificate((*it).second->title->getText() + " " + (*it).second->text->getText()).second;
     }
 
 
     // classificate images
     std::map<std::string, SSlide *>::iterator itI;
     for (itI = images.begin(); itI != images.end(); itI++) {
-      (*itI).second->objectclass = classificate((*itI).second->img->title + " " + (*itI).second->img->alt + " " + (*itI).second->img->context);
+      (*itI).second->objectclass = classificate((*itI).second->img->title + " " + (*itI).second->img->alt + " " + (*itI).second->img->context).first;
+      (*itI).second->relevance = classificate((*itI).second->img->title + " " + (*itI).second->img->alt + " " + (*itI).second->img->context).second;
     }
   }
 

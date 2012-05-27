@@ -45,6 +45,7 @@ namespace DataStorage {
     SText * title;
     SText * text;
     ClassificatorResult objectclass;
+    float relevance;
     
     Json::Value getArticle();
     void loadArticle(Json::Value article);

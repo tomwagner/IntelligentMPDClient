@@ -527,8 +527,25 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkCheckMenuItem" id="ratingMode">
+                        <property name="use_action_appearance">False</property>
+                        <property name="can_focus">False</property>
+                        <property name="label">Rating Mode</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkCheckMenuItem" id="presentationMode">
+                        <property name="use_action_appearance">False</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label">Presentation Mode</property>
+                        <property name="active">True</property>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkSeparatorMenuItem" id="separatormenuitem2">
                         <property name="use_action_appearance">False</property>
+                        <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
                     </child>
@@ -1671,6 +1688,17 @@ audio-volume-medium</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <child>
+                                      <object class="GtkLabel" id="articleRelevance">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
                                       <object class="GtkImage" id="articleClass">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
@@ -1681,7 +1709,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
-                                        <property name="position">0</property>
+                                        <property name="position">1</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1695,7 +1723,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
-                                        <property name="position">1</property>
+                                        <property name="position">2</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1721,7 +1749,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
-                                        <property name="position">2</property>
+                                        <property name="position">3</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1739,30 +1767,6 @@ audio-volume-medium</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="pixbuf">wrong.png</property>
-                                          </object>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">True</property>
-                                        <property name="position">3</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkToggleButton" id="articleSlideshow">
-                                        <property name="use_action_appearance">False</property>
-                                        <property name="width_request">20</property>
-                                        <property name="height_request">20</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_action_appearance">False</property>
-                                        <child>
-                                          <object class="GtkImage" id="articleSlideshowPlay">
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
-                                            <property name="stock">gtk-media-play</property>
-                                            <property name="icon-size">2</property>
                                           </object>
                                         </child>
                                       </object>
@@ -1787,6 +1791,30 @@ audio-volume-medium</property>
                                       </packing>
                                     </child>
                                     <child>
+                                      <object class="GtkToggleButton" id="articleSlideshow">
+                                        <property name="use_action_appearance">False</property>
+                                        <property name="width_request">20</property>
+                                        <property name="height_request">20</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="use_action_appearance">False</property>
+                                        <child>
+                                          <object class="GtkImage" id="articleSlideshowPlay">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="stock">gtk-media-play</property>
+                                            <property name="icon-size">2</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">6</property>
+                                      </packing>
+                                    </child>
+                                    <child>
                                       <object class="GtkLabel" id="articleSourceName">
                                         <property name="can_focus">False</property>
                                         <property name="margin_right">5</property>
@@ -1796,7 +1824,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
-                                        <property name="position">6</property>
+                                        <property name="position">7</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1812,7 +1840,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">True</property>
                                         <property name="fill">True</property>
-                                        <property name="position">7</property>
+                                        <property name="position">8</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -2009,6 +2037,17 @@ audio-volume-medium</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <child>
+                                      <object class="GtkLabel" id="slideRelevance">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
                                       <object class="GtkImage" id="slideClass">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
@@ -2019,7 +2058,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
-                                        <property name="position">0</property>
+                                        <property name="position">1</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -2033,7 +2072,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
-                                        <property name="position">1</property>
+                                        <property name="position">2</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -2059,7 +2098,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
-                                        <property name="position">2</property>
+                                        <property name="position">3</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -2083,7 +2122,7 @@ audio-volume-medium</property>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
-                                        <property name="position">3</property>
+                                        <property name="position">4</property>
                                       </packing>
                                     </child>
                                     <child>

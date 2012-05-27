@@ -41,6 +41,7 @@ namespace GUI {
     virtual ~ArtistsWidget();
     void show();
     void hide();
+    void reload();
   private:
 
     bool checkMPDConnection();
@@ -54,7 +55,7 @@ namespace GUI {
     MPD::TagList artists;
     std::list<std::string> artistList;
     MPD::SongList m_actualSongs;
-    
+
     Gtk::Viewport * artistViewPort;
     Gtk::ScrolledWindow * artistScrolledWindow;
     Gtk::Label * artistsLabel;

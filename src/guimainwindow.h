@@ -159,6 +159,8 @@ namespace GUI {
     Gtk::ImageMenuItem * update;
     Gtk::ImageMenuItem * quit;
     Gtk::CheckMenuItem * showFeedbackButtons;
+    Gtk::CheckMenuItem * presentationMode;
+    void presentationModeSwitch();
     Gtk::CheckMenuItem * fullscreen;
     Gtk::ImageMenuItem * sourceSettings;
     Gtk::ImageMenuItem * progSettings;

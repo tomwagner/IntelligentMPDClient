@@ -26,7 +26,7 @@
 #include "guislideshowwidget.h"
 #include <iostream>
 
-#define DEBUG 0
+#define DEBUG 1
 
 namespace GUI {
 
@@ -40,12 +40,14 @@ namespace GUI {
   slideHeight(100),
   loadingIcon("ui/loader.gif"),
   it(NULL),
-  currentPosition(0) {
+  currentPosition(0),
+  m_presentation(true) {
     builder->get_widget("slideshowTab", slideshowTab);
     builder->get_widget("slideshowWidget", slideshowWidget);
     builder->get_widget("slideTitle", slideTitle);
     builder->get_widget("slide", slide);
     builder->get_widget("slideEventBox", slideEventBox);
+    builder->get_widget("slideRelevance", slideRelevance);
     builder->get_widget("slideSourceIcon", slideSourceIcon);
     builder->get_widget("slideSourceName", slideSourceName);
     builder->get_widget("slideSourceUrl", slideSourceUrl);
@@ -90,41 +92,65 @@ namespace GUI {
       if (currentPosition == 0) {
         it = slideList->begin();
       }
-      showSlide(it->second);
+      slideshowSize = getListSize();
+      showSlide();
     }
   }
 
 
-  void SlideshowWidget::showSlide(SSlide * s) {
-    std::ostringstream position;
-    int slideListLen = slideList->size();
-    position << (currentPosition % (slideListLen) + 1);
-    position << "/";
-    position << slideList->size();
+  unsigned SlideshowWidget::getListSize() {
+    // if is no presentation mode set, return all elements size
+    if (!m_presentation) return slideList->size();
 
-    setActive(true);
+
+    // presentation mode enabled, show only valid objects
+    unsigned len = 0;
+    std::map<std::string, SSlide *>::iterator p;
+    for (p = slideList->begin(); p != slideList->end(); p++) {
+      if ((p->second->objectclass == NaiveBayes::firstClass) || (p->second->objectclass == NaiveBayes::unknownClass)) len++;
+    }
+    return len;
+  }
+
+
+  void SlideshowWidget::showSlide() {
+    std::ostringstream position;
+
+
+    if (slideshowSize != 0) {
+      position << (currentPosition % slideshowSize + 1);
+      position << "/";
+      position << slideshowSize;
+    }
+
+    // activate widget
     setActive(true);
     checkIfICanVote();
 
-    checkClassOfObject(s);
-    if (!s->img->title.empty())
-      slideTitle->set_label(s->img->title);
-    else if (!s->img->alt.empty())
-      slideTitle->set_label(s->img->alt);
-    else if (!s->img->context.empty() && s->img->context.length() < 100)
-      slideTitle->set_label(s->img->context);
+
+    checkClassOfObject(it->second);
+    if (!it->second->img->title.empty())
+      slideTitle->set_label(it->second->img->title);
+    else if (!it->second->img->alt.empty())
+      slideTitle->set_label(it->second->img->alt);
+    else if (!it->second->img->context.empty() && it->second->img->context.length() < 100)
+      slideTitle->set_label(it->second->img->context);
 
 
     slideshowTab->set_label("Slideshow [" + position.str() + "]");
-    if (!s->getLocalPath().empty()) {
-      slide->set(s->img->resize(slideWidth, slideHeight));
-      if (Glib::file_test(s->getLocalPath(), Glib::FILE_TEST_EXISTS))
-        slideSourceIcon->set(s->resize(16, 16));
+    if (!it->second->getLocalPath().empty()) {
+      slide->set(it->second->img->resize(slideWidth, slideHeight));
+      if (Glib::file_test(it->second->getLocalPath(), Glib::FILE_TEST_EXISTS))
+        slideSourceIcon->set(it->second->resize(16, 16));
     }
-    slideSourceName->set_label(s->getName());
+
+    // set relevance label
+    setRelevance(it->second->relevance);
+
+    slideSourceName->set_label(it->second->getName());
 
     // convert to html specialchars
-    std::string url = s->getSourceName();
+    std::string url = it->second->getSourceName();
     utils::htmlSpecialChars(url);
 
     slideSourceUrl->set_markup("<a href=\"" + url + "\">" + url + "</a>");
@@ -141,7 +167,7 @@ namespace GUI {
   }
 
 
-  void SlideshowWidget::setSlideshowWidget(SArtist* artist) {
+  void SlideshowWidget::setSlideshowWidget(SArtist * artist) {
 
     currentArtist = artist;
     slideList = &currentArtist->images;
@@ -152,7 +178,7 @@ namespace GUI {
 
     // show slide
     if (!slideList->empty())
-      showSlide(it->second);
+      showSlide();
     else
       clearSlide();
   }
@@ -166,6 +192,8 @@ namespace GUI {
     slideshowTab->set_label("Slideshow");
     slideTitle->set_label("");
     showLoading();
+
+    slideRelevance->set_label("");
 
     // clear sources
     slideSourceIcon->set_from_icon_name("gtk-missing-image", Gtk::ICON_SIZE_SMALL_TOOLBAR);
@@ -239,7 +267,16 @@ namespace GUI {
 
     if (it == slideList->end()) it = slideList->begin();
 
-    showSlide(it->second);
+    // if presenattion mode enabled, skip second class
+    if (m_presentation) {
+      // search for data with first class
+      while ((it->second->objectclass == NaiveBayes::secondClass) && (slideshowSize > 0)) {//|| (it->second->objectclass == NaiveBayes::unknownClass)
+        it++;
+        if (it == slideList->end()) it = slideList->begin();
+      }
+    }
+
+    showSlide();
   }
 
 
@@ -250,7 +287,19 @@ namespace GUI {
     if (currentPosition == 0) currentPosition = slideList->size();
     currentPosition--;
 
-    showSlide(it->second);
+
+    // if presenattion mode enabled, skip second class
+    if (m_presentation) {
+      // search for data with first class
+      if (it->second == NULL) return;
+      while ((it->second->objectclass == NaiveBayes::secondClass) && (slideshowSize > 0)) { //|| (it->second->objectclass == NaiveBayes::unknownClass)
+        it--;
+        if (it->second == NULL) it = slideList->end();
+      }
+    }
+
+    if (it->second == NULL) return;
+    showSlide();
 
   }
 
@@ -297,6 +346,12 @@ namespace GUI {
     currentArtist->classificateArtist();
     // detect new class of object
     checkClassOfObject(it->second);
+
+    // if presentation enabled, show next after wrong feedback
+    if (m_presentation) {
+      // show me next relevant
+      on_next();
+    }
   }
 
 
@@ -321,6 +376,8 @@ namespace GUI {
     } else {
       slideClass->set_from_icon_name("gtk-help", Gtk::ICON_SIZE_SMALL_TOOLBAR);
     }
+    // set relevance label
+    setRelevance(s->relevance);
   }
 
 
@@ -331,5 +388,27 @@ namespace GUI {
     } else if (s->direction == GDK_SCROLL_UP) {
       on_prev();
     }
+  }
+
+
+  void SlideshowWidget::setRelevance(float rel) {
+    std::ostringstream relevance;
+    float precent = rel * 100;
+    relevance << std::fixed << std::setprecision(2) << precent << '%';
+
+
+    slideRelevance->set_label(relevance.str());
+  }
+
+
+  void SlideshowWidget::enablePresentationMode() {
+    m_presentation = true;
+    showSlide();
+  }
+
+
+  void SlideshowWidget::disablePresentationMode() {
+    m_presentation = false;
+    showSlide();
   }
 }

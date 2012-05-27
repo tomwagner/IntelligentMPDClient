@@ -31,7 +31,8 @@ namespace DataStorage {
 
   SArticle::SArticle() : title(new SText),
   text(new SText),
-  objectclass(NaiveBayes::unknownClass) {
+  objectclass(NaiveBayes::unknownClass),
+  relevance (0.0){
   }
 
 

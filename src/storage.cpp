@@ -38,7 +38,6 @@ namespace DataStorage {
 
 
   Storage::Storage() : filePath(""), http(new HTTP) {
-    sleep(1);
 #if DEBUG
     std::cout << "storage vytvořen" << std::endl;
 #endif
@@ -72,7 +71,7 @@ namespace DataStorage {
       // save with sync flags
       currentArtist->saveArtist(filePath);
     }
-    
+
     delete currentArtist;
     delete http;
   }
@@ -126,17 +125,21 @@ namespace DataStorage {
     currentArtist->name.set(s.GetArtist());
     currentArtist->album.set(s.GetAlbum());
 
-    // if is enabled remote sharing, share
-    if (Config::GetInstance()->isRemoteStorageEnabled()) {
-      // remote load artist
-      std::string remoteArtistContent = remoteLoadArtist(s.GetArtist());
-      currentArtist->loadArtistFromContent(remoteArtistContent);
-    }
-
     // check if file exists
     // search in local temp
     currentArtist->loadArtistFromFile(filePath);
 
+    // if is enabled remote sharing, share
+    if (Config::GetInstance()->isRemoteStorageEnabled()) {
+      // remote load artist
+      std::string remoteArtistContent = remoteLoadArtist(s.GetArtist());
+      currentArtist->loadArtistFromRemoteContent(remoteArtistContent);
+    }
+
+    // classificate artist
+    currentArtist->loadClassificator();
+
+    currentArtist->classificateArtist();
 
     loadWidgets();
   }

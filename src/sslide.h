@@ -45,6 +45,7 @@ namespace DataStorage {
     SImage * img;
     std::string title;
     ClassificatorResult objectclass;
+    float relevance;
 
     Json::Value getSlide();
     void loadSlide(Json::Value);

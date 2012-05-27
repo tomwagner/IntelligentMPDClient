@@ -60,6 +60,7 @@ namespace GUI {
     builder->get_widget("disconnect", disconnect);
     builder->get_widget("info", info);
     info->hide();
+    builder->get_widget("presentationMode", presentationMode);
     builder->get_widget("update", update);
     builder->get_widget("quit", quit);
     builder->get_widget("showFeedbackButtons", showFeedbackButtons);
@@ -125,7 +126,7 @@ namespace GUI {
 
     quit->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::on_quit));
     about->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::showAboutDialog));
-//    aboutDialog->signal_button_press_event().connect(sigc::mem_fun(*this, &MainWindow::on_quit));
+    //    aboutDialog->signal_button_press_event().connect(sigc::mem_fun(*this, &MainWindow::on_quit));
     // vytvoříme status iconu
     if (Glib::file_test("ui/icon.png", Glib::FILE_TEST_EXISTS)) {
       Glib::RefPtr<Gtk::StatusIcon> trayIcon = Gtk::StatusIcon::create_from_file("ui/icon.png");
@@ -134,6 +135,7 @@ namespace GUI {
     }
 
     showFeedbackButtons->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::feedbackSwitch));
+    presentationMode->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::presentationModeSwitch));
     fullscreen->signal_activate().connect(sigc::mem_fun(*this, &MainWindow::fullscreenSwitch));
 
 
@@ -205,7 +207,7 @@ namespace GUI {
     volumeScale->signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::setVolume));
 
 
-//    MPD::Client::GetInstance()->UpdateStatus();
+    //    MPD::Client::GetInstance()->UpdateStatus();
 
     // article widget
     articlesWidget = new ArticlesWidget(builder);
@@ -221,14 +223,8 @@ namespace GUI {
 
     // cover widget
     coverWidget = new CoverWidget(builder);
-    
-    showDialogs();
 
-    // update player
-    //    updateGUI();
-    //    // plan cyclic update fo 500 mili seconds
-    //    updateTimeout = Glib::signal_timeout().connect(
-    //            sigc::mem_fun(*this, &MainWindow::updateGUI), 1000);
+    showDialogs();
   }
 
 
@@ -361,67 +357,6 @@ namespace GUI {
       mainWindow->unfullscreen();
     }
   }
-
-
-  /**
-   * Method to update GUI. We call it every one second.
-   */
-//  bool MainWindow::updateGUI() {
-//
-//    // we show accumulated dialogs
-//    showDialogs();
-//
-//    // update client status
-//    MPD::Client::GetInstance()->UpdateStatus();
-//
-//    if (MPD::Client::GetInstance()->Connected()) {
-//      MPD::PlayerState s = MPD::Client::GetInstance()->GetState();
-//
-//      if (s == MPD::psPlay) {
-//        play->set_active(true);
-//        play->set_image(*pauseImage);
-//
-//        // update time scale widget
-//        setTimeScale(MPD::Client::GetInstance()->GetElapsedTime(), MPD::Client::GetInstance()->GetTotalTime());
-//
-//        // we set default volume
-//        volumeScale->set_value(MPD::Client::GetInstance()->GetVolume());
-//
-//        MPD::Song song = MPD::Client::GetInstance()->GetCurrentSong();
-//        if (!song.Empty()) {
-//          // update text widgets
-//          setAlbum(song.GetAlbum());
-//          setArtist(song.GetArtist());
-//          setSongLabel(song.GetArtist() + " - " + song.GetTitle());
-//          setGenre(song.GetGenre());
-//          setTitle(song.GetTitle());
-//        }
-//
-//        std::stringstream bitrate;
-//        bitrate << MPD::Client::GetInstance()->GetBitrate();
-//        bitrate << " kbit/s";
-//
-//        songBitrate->set_text(bitrate.str());
-//
-//        // load new info to widgets
-//        //        std::cout << "updateArticlesWidget()" << std::endl;
-//        articlesWidget->updateArticlesWidget();
-//        slideshowWidget->updateSlideshowWidget();
-//        //        coverWidget->updateCoverWidget();
-//
-//        //        Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_file("ui/bg_test2.jpg");
-//        //        p = p->add_alpha(1, 0, 255, 0);
-//        //p = p->scale_simple(100,100,Gdk::INTERP_BILINEAR);
-//
-//      } else if (s == MPD::psPause) {
-//        play->set_active(false);
-//        play->set_image(*playImage);
-//      } else if (s == MPD::psStop) {
-//        on_stop();
-//      }
-//      //      return true;
-//    }
-//  }
 
 
   Gtk::Window * MainWindow::getWindow() const {
@@ -565,8 +500,8 @@ namespace GUI {
     setGenre("");
     setTimeScale(0, 0);
     setTitle("");
-     
-    
+
+
 
     setStatusBar(_("IMPC Stopped"));
   }
@@ -668,6 +603,17 @@ namespace GUI {
       articleWrong->show();
       slideRight->show();
       slideWrong->show();
+    }
+  }
+
+
+  void MainWindow::presentationModeSwitch() {
+    if (presentationMode->get_active()) {
+      articlesWidget->enablePresentationMode();
+      slideshowWidget->enablePresentationMode();
+    } else {
+      articlesWidget->disablePresentationMode();
+      slideshowWidget->disablePresentationMode();
     }
   }
 

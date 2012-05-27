@@ -85,7 +85,7 @@ public:
   std::list<imgPair> getImgListExactly(std::string contains);
   std::list<imgPair> getImgListWithName(std::string contains);
   std::list<linkPair*>& getImgLinkList();
-  //  std::list<linkPair*> getImgLinkList(std::string contains);
+  std::list<linkPair*> getImgLinkList(std::string contains);
   std::list<linkPair*>& getLinkList();
   std::list<linkPair*> getLinkList(std::string contains);
   std::list<linkPair*> getLinkListExactly(std::string contains);

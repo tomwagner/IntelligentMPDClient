@@ -100,6 +100,11 @@ namespace GUI {
   }
 
 
+  void ArtistsWidget::reload() {
+    loadArtists();
+  }
+
+
   void ArtistsWidget::loadArtists() {
 
     // set artist Label
@@ -203,16 +208,16 @@ namespace GUI {
 
 
   bool ArtistsWidget::on_resize(GdkEvent* e) {
-//    std::cout << e->type << std::endl;
-//    //    if (e->type == GDK_VISIBILITY_NOTIFY) {
-//    int width = artistScrolledWindow->get_width();
-//    std::cout << "resize: " << width;
-//    artistsView->unset_model();
-//    artistsView->set_model(treeModel);
-//
-//    //      loadArtists();
-//    //      artistsView->set_();
-//    //    }
+    //    std::cout << e->type << std::endl;
+    //    //    if (e->type == GDK_VISIBILITY_NOTIFY) {
+    //    int width = artistScrolledWindow->get_width();
+    //    std::cout << "resize: " << width;
+    //    artistsView->unset_model();
+    //    artistsView->set_model(treeModel);
+    //
+    //    //      loadArtists();
+    //    //      artistsView->set_();
+    //    //    }
     return false;
   }
 

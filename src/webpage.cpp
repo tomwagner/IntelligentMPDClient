@@ -861,22 +861,22 @@ std::list<linkPair*>& Webpage::getImgLinkList() {
   return imgLinkList;
 }
 
-//
-//std::list<linkPair*> Webpage::getImgLinkList(std::string contains) {
-//  std::list<linkPair*> localLinkList;
-//  std::list<linkPair*>::iterator it;
-//  for (it = linkList.begin(); it != linkList.end(); it++) {
-//
-//    if ((*it)->name.compare(contains) == 0) {
-//      localLinkList.push_back((*it));
-//    }
-//  }
-//
-//  // seřadíme a vyházíme duplicity
-//  localLinkList.sort(ci_paragraph);
-//  localLinkList.unique(compareURL);
-//  return localLinkList;
-//}
+
+std::list<linkPair*> Webpage::getImgLinkList(std::string contains) {
+  std::list<linkPair*> localLinkList;
+  std::list<linkPair*>::iterator it;
+  for (it = linkList.begin(); it != linkList.end(); it++) {
+
+    if ((*it)->name.compare(contains) == 0) {
+      localLinkList.push_back((*it));
+    }
+  }
+
+  // seřadíme a vyházíme duplicity
+  localLinkList.sort(ci_paragraph);
+  localLinkList.unique(compareURL);
+  return localLinkList;
+}
 
 
 void Webpage::parseImgList() {

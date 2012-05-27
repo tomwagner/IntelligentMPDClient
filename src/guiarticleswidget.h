@@ -31,6 +31,7 @@
 #include <map>
 #include "sarticle.h"
 #include "utils.h"
+#include <iomanip>
 
 using namespace DataStorage;
 
@@ -48,11 +49,13 @@ namespace GUI {
 
     void clearArticlesWidget();
 
+    void enablePresentationMode();
+    void disablePresentationMode();
   private:
     SArtist * currentArtist;
     int currentPosition;
     bool slideshowStarted;
-    void showArticle(SArticle *);
+    void showArticle();
 
     void removeMarkup(std::string &s);
     std::string getPosition();
@@ -66,6 +69,7 @@ namespace GUI {
     Gtk::ScrolledWindow * articleWindow;
     Gtk::Label * articleTitle;
     Gtk::Label * articleAbout;
+    Gtk::Label * articleRelevance;
     Gtk::Image * articleSourceIcon;
     Gtk::Label * articleSourceName;
     Gtk::Label * articleSourceUrl;
@@ -97,7 +101,14 @@ namespace GUI {
     // classification
     Gtk::Image * articleClass;
     void checkClassOfObject(SArticle * s);
+    void setRelevance(float rel);
     void setActive(bool b);
+
+
+    unsigned getListSize();
+  private:
+    int slideshowSize;
+    bool m_presentation;
 
   };
 }

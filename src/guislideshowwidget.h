@@ -30,7 +30,7 @@
 #include <list>
 #include "sartist.h"
 #include "utils.h"
-
+#include <iomanip>
 
 
 using namespace DataStorage;
@@ -53,7 +53,8 @@ namespace GUI {
     void run();
     void stop();
 
-
+    void enablePresentationMode();
+    void disablePresentationMode();
   private:
     SArtist * currentArtist;
     bool slideshowStarted;
@@ -63,7 +64,7 @@ namespace GUI {
     int slideHeight;
 
     bool slideLeft();
-    void showSlide(SSlide * s);
+    void showSlide();
 
     std::map<std::string, SSlide *>* slideList;
     std::map<std::string, SSlide *>::iterator it;
@@ -75,6 +76,7 @@ namespace GUI {
     Gtk::Label * slideTitle;
     Gtk::Image * slide;
     Gtk::EventBox * slideEventBox;
+    Gtk::Label * slideRelevance;
     Gtk::Image * slideSourceIcon;
     Gtk::Label * slideSourceName;
     Gtk::Label * slideSourceUrl;
@@ -105,9 +107,14 @@ namespace GUI {
     // classification
     Gtk::Image * slideClass;
     void checkClassOfObject(SSlide * s);
+    void setRelevance(float rel);
     void setActive(bool b);
+
+    unsigned getListSize();
   private:
+    int slideshowSize;
     int currentPosition;
+    bool m_presentation;
 
 
   };

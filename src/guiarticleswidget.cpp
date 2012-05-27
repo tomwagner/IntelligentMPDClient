@@ -39,16 +39,20 @@ namespace GUI {
 
   ArticlesWidget::ArticlesWidget(Glib::RefPtr<Gtk::Builder>& builder) :
   currentArtist(NULL),
+  it(NULL),
   currentPosition(0),
-  it(NULL) {
+  m_presentation(true) {
     builder->get_widget("articleTab", articleTab);
     builder->get_widget("articleWindow", articleWindow);
     builder->get_widget("articlesWidget", articlesWidget);
     builder->get_widget("articleTitle", articleTitle);
     builder->get_widget("articleAbout", articleAbout);
+    builder->get_widget("articleRelevance", articleRelevance);
     builder->get_widget("articleSourceIcon", articleSourceIcon);
     builder->get_widget("articleSourceName", articleSourceName);
     builder->get_widget("articleSourceUrl", articleSourceUrl);
+
+
 
 
     // slideshow
@@ -88,37 +92,57 @@ namespace GUI {
   }
 
 
-  void ArticlesWidget::showArticle(SArticle * a) {
+  unsigned ArticlesWidget::getListSize() {
+    // if is no presentation mode set, return all elements size
+    if (!m_presentation) return articlesList->size();
+
+
+    // presentation mode enabled, show only valid objects
+    unsigned len = 0;
+    std::map<std::string, SArticle *>::iterator p;
+    for (p = articlesList->begin(); p != articlesList->end(); p++) {
+      if ((p->second->objectclass == NaiveBayes::firstClass) || (p->second->objectclass == NaiveBayes::unknownClass)) len++;
+    }
+    return len;
+  }
+
+
+  void ArticlesWidget::showArticle() {
 
     std::ostringstream position;
-    int articlesListLen = articlesList->size();
-    position << (currentPosition % (articlesListLen) + 1);
-    position << "/";
-    position << articlesList->size();
 
+    if (slideshowSize != 0) {
+      position << (currentPosition % slideshowSize + 1);
+      position << "/";
+      position << slideshowSize;
+    }
+    // activate widget
     setActive(true);
 
     checkIfICanVote();
-    checkClassOfObject(a);
+    checkClassOfObject(it->second);
 
     articleTab->set_label("Articles [" + position.str() + "]");
 
-    std::string content = a->text->getText();
+    std::string content = it->second->text->getText();
     removeMarkup(content);
 
-    articleTitle->set_label(a->title->getText());
+    articleTitle->set_label(it->second->title->getText());
     articleAbout->set_label(content);
 
 
-    if (!a->getLocalPath().empty()) {
+    // set relevance label
+    setRelevance(it->second->relevance);
+
+    if (!it->second->getLocalPath().empty()) {
       // source labels
-      if (Glib::file_test(a->getLocalPath(), Glib::FILE_TEST_EXISTS))
-        articleSourceIcon->set(a->resize(16, 16));
+      if (Glib::file_test(it->second->getLocalPath(), Glib::FILE_TEST_EXISTS))
+        articleSourceIcon->set(it->second->resize(16, 16));
     }
-    articleSourceName->set_label(a->getName());
+    articleSourceName->set_label(it->second->getName());
 
     // convert to html specialchars
-    std::string url = a->getSourceName();
+    std::string url = it->second->getSourceName();
     utils::htmlSpecialChars(url);
 
     articleSourceUrl->set_markup("<a href=\"" + url + "\">" + url + "</a>");
@@ -132,7 +156,7 @@ namespace GUI {
 
     //    checkIfICanVote();
     if (!articlesList->empty())
-      showArticle(it->second);
+      showArticle();
     else
       clearArticlesWidget();
   }
@@ -151,13 +175,15 @@ namespace GUI {
   void ArticlesWidget::clearArticlesWidget() {
     // set position to 0
     currentPosition = 0;
-    
+
     articleTab->set_label("Articles");
 
     setActive(false);
 
     articleTitle->set_label("");
     articleAbout->set_label("");
+
+    articleRelevance->set_label("");
 
     // clear sources
     articleSourceIcon->set_from_icon_name("gtk-missing-image", Gtk::ICON_SIZE_SMALL_TOOLBAR);
@@ -176,7 +202,8 @@ namespace GUI {
     if (!articlesList->empty()) {
       if (currentPosition == 0)
         it = articlesList->begin();
-      showArticle(it->second);
+      slideshowSize = getListSize();
+      showArticle();
     }
   }
 
@@ -237,8 +264,16 @@ namespace GUI {
 
     if (it == articlesList->end()) it = articlesList->begin();
 
+    // if presenattion mode enabled, skip second class
+    if (m_presentation) {
+      // search for data with first class
+      while ((it->second->objectclass == NaiveBayes::secondClass) && (slideshowSize > 0)) {//|| (it->second->objectclass == NaiveBayes::unknownClass)
+        it++;
+        if (it == articlesList->end()) it = articlesList->begin();
+      }
+    }
 
-    showArticle(it->second);
+    showArticle();
   }
 
 
@@ -250,8 +285,18 @@ namespace GUI {
     if (currentPosition == 0) currentPosition = articlesList->size();
     currentPosition--;
 
+    // if presenattion mode enabled, skip second class
+    if (m_presentation) {
+      // search for data with first class
+      while ((it->second->objectclass == NaiveBayes::secondClass) && (slideshowSize > 0)) { //|| (it->second->objectclass == NaiveBayes::unknownClass)
+        it--;
+        if (it->second == NULL) it = articlesList->end();
+      }
+    }
 
-    showArticle(it->second);
+    if (it->second == NULL) return;
+
+    showArticle();
 
   }
 
@@ -293,6 +338,12 @@ namespace GUI {
 
     checkIfICanVote();
     checkClassOfObject(it->second);
+
+    // if presentation enabled, show next after wrong feedback
+    if (m_presentation) {
+      // show me next relevant
+      on_next();
+    }
   }
 
 
@@ -317,5 +368,29 @@ namespace GUI {
     } else {
       articleClass->set_from_icon_name("gtk-help", Gtk::ICON_SIZE_SMALL_TOOLBAR);
     }
+    // set relevance label
+    setRelevance(s->relevance);
+  }
+
+
+  void ArticlesWidget::setRelevance(float rel) {
+    std::ostringstream relevance;
+    float precent = rel * 100;
+    relevance << std::fixed << std::setprecision(2) << precent << '%';
+
+
+    articleRelevance->set_label(relevance.str());
+  }
+
+
+  void ArticlesWidget::enablePresentationMode() {
+    m_presentation = true;
+    showArticle();
+  }
+
+
+  void ArticlesWidget::disablePresentationMode() {
+    m_presentation = false;
+    showArticle();
   }
 }

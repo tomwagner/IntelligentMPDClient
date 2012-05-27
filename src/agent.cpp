@@ -25,7 +25,7 @@
 
 #include "agent.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define TESTING 0
 
 
@@ -404,7 +404,8 @@ void Agent::saveArticles(std::list<article *> articleList) {
     a->setSourceName(actualUrl);
 
     // classificate
-    a->objectclass = Storage::GetInstance()->currentArtist->classificate(a->text->getText() + " " + a->title->getText());
+    a->objectclass = Storage::GetInstance()->currentArtist->classificate(a->text->getText() + " " + a->title->getText()).first;
+    a->relevance = Storage::GetInstance()->currentArtist->classificate(a->text->getText() + " " + a->title->getText()).second;
 
     switch (a->objectclass) {
       case NaiveBayes::firstClass:
@@ -469,7 +470,8 @@ void Agent::saveAlbumList(std::list<imgPair> imgList) {
     }
 
     // classification
-    a->objectclass = Storage::GetInstance()->currentArtist->classificate(a->img->alt + " " + a->img->context + " " + a->img->title);
+    a->objectclass = Storage::GetInstance()->currentArtist->classificate(a->img->alt + " " + a->img->context + " " + a->img->title).first;
+    //    a->relevance = Storage::GetInstance()->currentArtist->classificate(a->img->alt + " " + a->img->context + " " + a->img->title).second;
 
     switch (a->objectclass) {
       case NaiveBayes::firstClass:
@@ -535,7 +537,8 @@ void Agent::saveImageList(std::list<imgPair> imgList) {
     }
 
     // classification
-    a->objectclass = Storage::GetInstance()->currentArtist->classificate(a->img->alt + " " + a->img->context + " " + a->img->title);
+    a->objectclass = Storage::GetInstance()->currentArtist->classificate(a->img->alt + " " + a->img->context + " " + a->img->title).first;
+    a->relevance = Storage::GetInstance()->currentArtist->classificate(a->img->alt + " " + a->img->context + " " + a->img->title).second;
 
     switch (a->objectclass) {
       case NaiveBayes::firstClass:
@@ -585,14 +588,15 @@ void Agent::browseImageMap() {
 #if DEBUG
       std::cout << "browseImageMap: " << absoluteUrl((*i).second.url) << "imgs:" << imgList.size() << std::endl;
 #endif
+
+      // save images
+      saveImageList(imgList);
+
       // get albums
       std::list<imgPair> albList = w->getImgList(currentAlbum);
 
       // save albums
       saveAlbumList(albList);
-
-      // save images
-      saveImageList(imgList);
 
       // get images contains albums
       imgList = w->getImgList(currentAlbum);

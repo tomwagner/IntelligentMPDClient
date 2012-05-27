@@ -25,7 +25,6 @@
  */
 #ifndef CLASSIFICATION_H
 #define	CLASSIFICATION_H
-#include <map>
 #include <math.h>
 #include <iostream>
 #include "bayesindex.h"
@@ -37,12 +36,13 @@ namespace NaiveBayes {
     unknownClass = 0,
     secondClass = 1
   } ClassificatorResult;
+  
 
   class Classificator {
   public:
     Classificator();
     virtual ~Classificator();
-    ClassificatorResult classificate(Index* first, Index * second, Index * item);
+    std::pair<ClassificatorResult, float> classificate(Index* first, Index * second, Index * item);
   private:
 
     float I;

@@ -50,6 +50,7 @@ namespace DataStorage {
     void setSynced(bool);
     bool isSynced(){return m_synced;}
     
+    void loadArtistFromRemoteContent(std::string& content);
     void loadArtistFromContent(std::string& content);
     void loadArtistFromFile(const std::string& filePath);
     void saveArtist(std::string& filePath);
@@ -69,11 +70,12 @@ namespace DataStorage {
     void loadMap(std::string mapName, std::map<std::string, AgentUrl>* map);
     void saveMap(std::string mapName, std::map<std::string, AgentUrl>* map);
 
-    ClassificatorResult classificate(std::string s);
-    ClassificatorResult classificate(Index * item);
+    std::pair<ClassificatorResult, float> classificate(std::string s);
+    std::pair<ClassificatorResult, float> classificate(Index * item);
 
     void addAsRight(std::string& s);
     void addAsWrong(std::string& s);
+    void loadClassificator();
     void classificateArtist();
 
     SText name;

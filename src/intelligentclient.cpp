@@ -57,18 +57,16 @@ void updatePlayer(MPD::Client *, MPD::StatusChanges changed, void *) {
   }
   if (changed.ElapsedTime) {
 
-//    if (!Config::GetInstance()->isAgentsEnabled()) {
-//      AgentManager::GetInstance()->killAgents();
-//    }
-//
-//    AgentManager::GetInstance()->isSourcesChanged();
-    AgentManager::GetInstance()->checkIfAgentsEnabled();
-
+    //    if (!Config::GetInstance()->isAgentsEnabled()) {
+    //      AgentManager::GetInstance()->killAgents();
+    //    }
+    //
+    //    AgentManager::GetInstance()->isSourcesChanged();
 
     // load new info to widgets
     GUI::MainWindow::GetInstance()->articlesWidget->updateArticlesWidget();
     GUI::MainWindow::GetInstance()->slideshowWidget->updateSlideshowWidget();
-//    GUI::MainWindow::GetInstance()->coverWidget->updateCoverWidget();
+    //    GUI::MainWindow::GetInstance()->coverWidget->updateCoverWidget();
 
 
     GUI::MainWindow::GetInstance()->setTimeScale(MPD::Client::GetInstance()->GetElapsedTime(), MPD::Client::GetInstance()->GetTotalTime());
@@ -89,9 +87,6 @@ void updatePlayer(MPD::Client *, MPD::StatusChanges changed, void *) {
       GUI::MainWindow::GetInstance()->on_play();
       GUI::MainWindow::GetInstance()->setPlayButtonActive(true);
 
-      // we set default volume
-      GUI::MainWindow::GetInstance()->setVolume((double) MPD::Client::GetInstance()->GetVolume());
-
       GUI::MainWindow::GetInstance()->setBitrate(MPD::Client::GetInstance()->GetBitrate());
 
     } else if (s == MPD::psPause) {
@@ -99,8 +94,21 @@ void updatePlayer(MPD::Client *, MPD::StatusChanges changed, void *) {
       GUI::MainWindow::GetInstance()->setPlayButtonActive(false);
     } else if (s == MPD::psStop) {
       GUI::MainWindow::GetInstance()->on_stop();
+      GUI::MainWindow::GetInstance()->articlesWidget->clearArticlesWidget();
+      GUI::MainWindow::GetInstance()->slideshowWidget->clearSlide();
     }
   }
+
+  if (changed.DBUpdating) {
+    GUI::MainWindow::GetInstance()->artistsWidget->reload();
+  }
+
+  if (changed.Volume) {
+    // we set default volume
+    GUI::MainWindow::GetInstance()->setVolume((double) MPD::Client::GetInstance()->GetVolume());
+  }
+
+  AgentManager::GetInstance()->checkIfAgentsEnabled();
 }
 
 
@@ -137,9 +145,9 @@ IntelligentClient::~IntelligentClient() {
   delete GUI::MainWindow::GetInstance();
 #endif
   delete AgentManager::GetInstance();
-  delete Config::GetInstance();
   delete Storage::GetInstance();
   delete MPD::Client::GetInstance();
+  delete Config::GetInstance();
 }
 
 

@@ -29,7 +29,7 @@ using namespace NaiveBayes;
 namespace DataStorage {
 
 
-  SSlide::SSlide() : img(new SImage), objectclass(NaiveBayes::unknownClass) {
+  SSlide::SSlide() : img(new SImage), objectclass(NaiveBayes::unknownClass), relevance(0.0) {
 
   }
 

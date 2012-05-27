@@ -40,7 +40,7 @@ namespace NaiveBayes {
   }
 
 
-  ClassificatorResult Classificator::classificate(Index* first, Index * second, Index * item) {
+  std::pair<ClassificatorResult, float> Classificator::classificate(Index* first, Index * second, Index * item) {
 
     float prediction = GetPrediction(first, second, item);
 
@@ -48,12 +48,16 @@ namespace NaiveBayes {
     std::cout << prediction << std::endl;
 #endif
     if (prediction <= 0.5f - tolerance)
-      return secondClass;
+      return std::pair<ClassificatorResult, float>(secondClass, prediction);
+
+    //      return secondClass;
 
     if (prediction >= 0.5f + tolerance)
-      return firstClass;
+      return std::pair<ClassificatorResult, float>(firstClass, prediction);
+    //      return firstClass;
 
-    return unknownClass;
+    return std::pair<ClassificatorResult, float>(unknownClass, prediction);
+    //    return unknownClass;
   }
 
 
