@@ -86,7 +86,7 @@ INTLTOOL_FILES = intltool-extract.in \
 #INTLTOOL_POFILES = Makefile.in.in ChangeLog cs.po POTFILES.in
 #$(INTLTOOL_POFILES) 
 # data poskytovana v distribuci
-dist_data_DATA = $(include_HEADERS) $(impc_SOURCES) $(INTLTOOL_FILES) config xslt ui theme test 
+dist_data_DATA = $(include_HEADERS) $(impc_SOURCES) $(INTLTOOL_FILES) config xslt ui theme
 
 
 DISTCLEANFILES = intltool-extract \
